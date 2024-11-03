@@ -1,6 +1,11 @@
 import numpy as np
+import tkinter as tk
+import time
+from PIL import ImageTk, Image
+
 class ObservationSpace():
     def __init__(self):
+        self.transition_probability = 
         self.work_date # 작업일자
         self.available_work_time # 작업시간 100 -> 0 (daily)
         self.project_tasks = np.zeros((10, 3)) # 프로젝트 task 정보
@@ -24,3 +29,14 @@ class ObservationSpace():
 
         self.agent_location = []
         # agent의 x,y 좌표
+
+    def get_reward():
+
+        return self.reward()
+    
+    def state_after_action
+
+        return
+
+    def 
+
