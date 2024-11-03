@@ -1,5 +1,5 @@
 from simple_observation_space import SimpleObservationSpace as Observation
-from enviroment import Env
+from environment import Env
 import random
 import numpy as np
 from itertools import product
