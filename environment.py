@@ -76,4 +76,3 @@ class Action:
         
         return new_location
     
-    def 
