@@ -9,13 +9,16 @@ class DataLoader:
         self.task_dict = self.load_task()
         self.material_dict = self.load_material()
         self.equipment_dict = self.load_equipment()
-        self.field_width, self.field_height, self.start, self.end , self.obstacle_dict = self.load_field()
+        self.field_data, self.field_width, self.field_height, self.start, self.obstacle_dict = self.load_field()
     
     def load_field_data(self):
-        return self.field_width, self.field_height, self.start, self.end, self.resource_dict, self.obstacle_dict
+        return self.field_data, self.field_width, self.field_height
+    
+    def load_place_data(self):
+        return self.start, self.resource_dict, self.obstacle_dict, self.project_dict
     
     def load_project_data(self):
-        return self.project_dict, self.task_dict, self.material_dict, self.equipment_dict
+        return self.task_dict, self.material_dict, self.equipment_dict
     
     def load_equipment(self):
         file = open('./data/equipment_data.CSV',"r")
@@ -106,20 +109,20 @@ class DataLoader:
     def load_field(self):
         file = open('./data/field_map.CSV',"r")
         data = csv.reader(file)
+        field_data = []
         width, height = 0, 0
         obstacle_dict = dict()
 
         for i, row in enumerate(data):
+            row_data = []
             height += 1
             width = len(row)
             for j, item in enumerate(row):
+                row_data.append(item)
                 location = np.array((i, j))
 
                 if 'start' in item:
                     start = location
-
-                elif 'end' in item:
-                    end = location
 
                 elif 'obstacle' in item:
                     if item in obstacle_dict:
@@ -132,5 +135,7 @@ class DataLoader:
 
                 elif 'resource' in item:
                     self.resource_dict[item].locations.append(location)
-        
-        return width, height, start, end, obstacle_dict
+
+            field_data.append(row_data)
+        field_data = np.array(field_data)
+        return field_data, width, height, start, obstacle_dict
