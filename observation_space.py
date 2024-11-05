@@ -21,9 +21,9 @@ class Project:
 class Task:
     def __init__(self, name, resource_list, work_hour):
         self.name = name
-        self.resource_list = resource_list
+        self.resource_list = resource_list # 필요 resource list
         self.resource_status = [False for i in range(len(resource_list))] # resource 보유 여부
-        self.work_hour = work_hour
+        self.work_hour = work_hour # 작업해야할 시간
         self.status = False # task 수행 여부
 
 class Material:
