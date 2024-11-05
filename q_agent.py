@@ -77,24 +77,3 @@ class QAgent():
     def anneal_eps(self):
         self.eps -= 0.01  # Q러닝에선 epsilon 이 좀더 천천히 줄어 들도록 함.
         self.eps = max(self.eps, 0.2)
-      
-
-def main():
-    env = Env()
-    agent = QAgent()
-
-    for n_epi in range(1000):
-        done = False
-
-        s = env.reset()
-        # 하나의 episode
-        while not done:
-            a = agent.select_action(s) # 입실론 그리디에 의해서 action을 선택한다.
-            s_prime, r, done = env.step(a) # action을 수행하고 다음 상태, 보상, 종료 flag를 받아온다.
-            agent.update_table((s,a,r,s_prime)) # 그리디에 의해서 table을 업데이트 한다.
-            s = s_prime
-        agent.anneal_eps() # epsilon을 점차 줄어들게 한다.
-
-if __name__ == '__main__':
-    agent = QAgent()
-    # main()
