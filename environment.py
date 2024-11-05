@@ -1,13 +1,8 @@
 import numpy as np
 import tkinter as tk
-import time
-from PIL import ImageTk, Image
 import random
 
 from data_loader import DataLoader
-
-PhotoImage = ImageTk.PhotoImage
-UNIT = 100
 
 MaterialMaxQuota = 3 # material 종류 별 하루 최대 할당량
 EquipmentMaxQuota = 1 # equipment 종류 별 하루 최대 할당량
