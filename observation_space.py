@@ -1,4 +1,5 @@
 import numpy as np
+<<<<<<< HEAD
 class ObservationSpace():
     def __init__(self):
         self.work_date = 0 # 작업일자 (0~3)
@@ -17,12 +18,48 @@ class ObservationSpace():
         # project1 : 100 (task1 100시간 남음)
         # ...
         # project7 : 100, 200, 0 (task3만 완료됨)
+=======
 
-        self.project_tasks_resource = np.zeros(((10, 3, 4)))
-        # project1 : 1 (0, 0, 1, 1) (task1의 3번째 4번째 resource 준비됨)
-        # ...
+class Obstacle:
+    def __init__(self, name):
+        self.name = name
+        self.locations = []
 
+class Resource:
+    def __init__(self, name, resource_list):
+        self.locations = []
+        self.name = name
+        self.resource_list = resource_list
+>>>>>>> 0a7dc60202c92223612f5d5dc3e2d3dd4a710e4b
+
+class Project:
+    def __init__(self, name, task_list):
+        self.locations = []
+        self.name = name
+        self.task_list = task_list
+        self.status = False # project 수행 여부
+
+<<<<<<< HEAD
         self.agent_location = []
         # agent의 x,y 좌표
 
 
+=======
+class Task:
+    def __init__(self, name, resource_list, work_hour):
+        self.name = name
+        self.resource_list = resource_list
+        self.resource_status = [False for i in range(len(resource_list))] # resource 보유 여부
+        self.work_hour = work_hour
+        self.status = False # task 수행 여부
+
+class Material:
+    def __init__(self, name, weight):
+        self.name = name
+        self.weight = weight
+
+class Equipment:
+    def __init__(self, name):
+        self.location = np.zeros((1,2))
+        self.name = name
+>>>>>>> 0a7dc60202c92223612f5d5dc3e2d3dd4a710e4b
