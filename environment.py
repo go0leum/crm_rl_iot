@@ -19,11 +19,8 @@ TaskDone = 100 # task를 완료했을때 reward
 ProjectDone = 300 # project를 완료했을때 reward
 
 
-class Env(tk.Tk):
+class Env:
     def __init__(self):
-        super(Env, self).__init__()
-        self.title('Construction Resource Management')
-
         self.field_data, self.field_width, self.field_height = DataLoader.load_field_data()
         self.start, self.resource_dict, self.obstacle_dict, self.project_dict = DataLoader.load_place_data()
         self.task_dict, self.material_dict, self.equipment_dict = DataLoader.load_project_data()
@@ -48,8 +45,17 @@ class Env(tk.Tk):
             elif 'equipment' in key:
                 self.resource_day_quota[key] = random.randrange(0, EquipmentMaxQuota)
     
-    def day_reset(self):
-        # 하루 작업 시간이 끝난 후 reset: agent location, agent inventory, agent_ride, agent_payload, day_work_time
+    def agent_reset(self):
+        # 하루 작업 시간이 끝난 후 reset: agent location, agent inventory, agent_ride, agent_payload
+        self.agent_location = self.start
+        self.agent_inventory = dict.fromkeys(self.materials, 0) # agent가 들고 있는 material 정보
+        self.agent_ride = None # agent가 타고 있는 equipment 정보
+        self.agent_payload = 10
+
+    def reset(self):
+        self.start, self.resource_dict, self.obstacle_dict, self.project_dict = DataLoader.load_place_data()
+        self.task_dict, self.material_dict, self.equipment_dict = DataLoader.load_project_data()
+        
         self.agent_location = self.start
         self.agent_inventory = dict.fromkeys(self.materials, 0) # agent가 들고 있는 material 정보
         self.agent_ride = None # agent가 타고 있는 equipment 정보
@@ -63,9 +69,10 @@ class Env(tk.Tk):
 
         # 남은 하루 작업시간 확인 & reset
         if self.day_work_time < 1:
-            self.day_reset()
+            self.agent_reset()
             self.resource_reset()
             self.work_day -= 1
+            self.day_work_time = 100
 
         # move action
         if action==0:
