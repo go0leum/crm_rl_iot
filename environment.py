@@ -18,7 +18,6 @@ ResourceDone = 10 # material, equipment를 성공적으로 이동시켰을때 re
 TaskDone = 100 # task를 완료했을때 reward
 ProjectDone = 300 # project를 완료했을때 reward
 
-
 class Env:
     def __init__(self):
         self.field_data, self.field_width, self.field_height = DataLoader.load_field_data()
@@ -63,6 +62,9 @@ class Env:
 
         self.resource_day_quota = dict.fromkeys(self.resources, 0) # 하루에 할당된 자원의 양
         self.day_work_time = 100
+
+    def get_field_data(self):
+        return self.field_data, (self.start, self.resource_dict, self.obstacle_dict, self.project_dict)
 
     def step(self, action):
         # 0번 액션: 왼쪽, 1번 액션: 위, 2번 액션: 오른쪽, 3번 액션: 아래쪽
