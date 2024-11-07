@@ -20,9 +20,10 @@ ProjectDone = 300 # project를 완료했을때 reward
 
 class Env:
     def __init__(self):
-        self.field_data, self.field_width, self.field_height = DataLoader.load_field_data()
-        self.start, self.resource_dict, self.obstacle_dict, self.project_dict = DataLoader.load_place_data()
-        self.task_dict, self.material_dict, self.equipment_dict = DataLoader.load_project_data()
+        dataLoader = DataLoader()
+        self.field_data, self.field_width, self.field_height = dataLoader.load_field_data()
+        self.start, self.resource_dict, self.obstacle_dict, self.project_dict = dataLoader.load_place_data()
+        self.task_dict, self.material_dict, self.equipment_dict = dataLoader.load_project_data()
 
         self.materials = list(self.material_dict.keys())
         self.resources = list(self.material_dict.keys()).extend(list(self.equipment_dict.keys()))
@@ -64,6 +65,7 @@ class Env:
         self.day_work_time = 100
 
         return self.start
+        # return (agent_inventory, agent_ride, agent_payload, agent_location)
 
     def get_field_data(self):
         return self.field_data, (self.start, self.resource_dict, self.obstacle_dict, self.project_dict)
@@ -107,6 +109,7 @@ class Env:
         done = self.is_done()
 
         return self.agent_location, reward, done
+        # return (agent_inventory, agent_ride, agent_payload, agent_location), reward, done
 
     def is_done(self):
         # 지정된 작업 일수가 지나면 종료
