@@ -18,7 +18,7 @@ class GraphicDisplay(tk.Tk):
         self.field_width = self.env.field_width
         self.field_height = self.env.field_height
 
-        self.title('Policy Iteration')
+        self.title('crm rl iot')
         self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 50))
         self.texts = []
         self.arrows = []
