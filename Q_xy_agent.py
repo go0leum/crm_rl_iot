@@ -4,9 +4,9 @@ import numpy as np
 
 class QAgent():
     def __init__(self, env):
-        self.q_table = np.zeros((5, 7, 4)) # 마찬가지로 Q 테이블을 0으로 초기화
-        self.eps = 0.9
         self.env = env
+        self.q_table = np.zeros((self.env.field_height, self.env.field_width, 9)) # 마찬가지로 Q 테이블을 0으로 초기화
+        self.eps = 0.9
 
     def select_action(self, s):
         # eps-greedy로 액션을 선택해준다
