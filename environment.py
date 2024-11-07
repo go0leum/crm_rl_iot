@@ -63,6 +63,8 @@ class Env:
         self.resource_day_quota = dict.fromkeys(self.resources, 0) # 하루에 할당된 자원의 양
         self.day_work_time = 100
 
+        return self.start
+
     def get_field_data(self):
         return self.field_data, (self.start, self.resource_dict, self.obstacle_dict, self.project_dict)
 

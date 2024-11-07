@@ -5,7 +5,7 @@ import numpy as np
 from PIL import ImageTk, Image
 
 from environment import Env
-from q_agent import QAgent
+from Q_xy_agent import QAgent
 
 PhotoImage = ImageTk.PhotoImage
 UNIT = 100
