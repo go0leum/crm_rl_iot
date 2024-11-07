@@ -129,6 +129,7 @@ class DataLoader:
                         obstacle_dict[item].locations.append(location)
                     else:
                         obstacle_dict[item] = OS.Obstacle(item)
+                        obstacle_dict[item].locations.append(location)
 
                 elif 'project' in item:
                     self.project_dict[item].locations.append(location)

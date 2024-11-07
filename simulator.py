@@ -8,22 +8,22 @@ from environment import Env
 from Q_xy_agent import QAgent
 
 PhotoImage = ImageTk.PhotoImage
-UNIT = 100
+UNIT = 50
 
 class GraphicDisplay(tk.Tk):
     def __init__(self):
         super(GraphicDisplay, self).__init__()
         self.env = Env()
-        self.q_agent = QAgent()
+        self.q_agent = QAgent(self.env)
         self.field_width = self.env.field_width
         self.field_height = self.env.field_height
 
         self.title('crm rl iot')
-        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 50))
+        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 100))
         self.texts = []
         self.arrows = []
 
-        self.field_data, self.box_data = Env.get_field_data() #start, resource, obstacle, project
+        self.field_data, self.box_data = self.env.get_field_data() #start, resource, obstacle, project
         self.icons, self.boxes = self.load_images() #icon:agent,equipment, box:start, resource, obstacle, on_project, off_project
         self.canvas = self._build_canvas()
 
@@ -42,23 +42,66 @@ class GraphicDisplay(tk.Tk):
         canvas = tk.Canvas(self, bg='white',
                         height=self.field_height * UNIT,
                         width=self.field_width * UNIT)
+
+        # 그리드 생성
+        for col in range(0, self.field_width * UNIT, UNIT):  # 0~400 by 80
+            x0, y0, x1, y1 = col, 0, col, self.field_width * UNIT
+            canvas.create_line(x0, y0, x1, y1)
+        for row in range(0, self.field_height * UNIT, UNIT):  # 0~400 by 80
+            x0, y0, x1, y1 = 0, row, self.field_width * UNIT, row
+            canvas.create_line(x0, y0, x1, y1)
+
+        # 캔버스에 이미지 추가
+        # start, agent
+        start_y, start_x = self.box_data[0][0], self.box_data[0][1]
+        canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.boxes[0])
+        self.agent_icon = canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.icons[0])
+        # resource
+        resource_dict = self.box_data[1]
+        for key in resource_dict:
+            for location in resource_dict[key].locations:
+                canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[1])
+        # obstacle
+        obstacle_dict = self.box_data[2]
+        for key in obstacle_dict:
+            for location in obstacle_dict[key].locations:
+                canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[2])
+        # project
+        project_dict = self.box_data[3]
+        self.project_box_dict = dict()
+        for key in project_dict:
+            for location in project_dict[key].locations:
+                self.project_box_dict[key] = canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[3])
+        
+        canvas.pack()
+
+        # work day, reamin time 확인창
+        self.workday = tk.StringVar()
+        self.workday.set('Remaining working day: '+ str(self.env.work_day))
+        workday_label = Label(self, textvariable=self.workday)
+        workday_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 40)
+
+        self.worktime = tk.StringVar()
+        self.worktime.set('Remaining day work time: '+ str(self.env.day_work_time))
+        worktime_label = Label(self, textvariable=self.worktime)
+        worktime_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 60)
+
         # 입력창 초기화
         label = Label(self, text='episode: ')
         canvas.create_window(self.field_width * UNIT * 0.1, (self.field_height * UNIT) + 10,
                              window=label)
-        episode = tk.StringVar()
-        episode_entry = Entry(self, textvariable=episode)
+        self.episode_entry = Entry(self)
         canvas.create_window(self.field_width * UNIT * 0.2, (self.field_height * UNIT) + 10,
-                             window=episode_entry)
+                             window=self.episode_entry)
         # 버튼 초기화
         qlearning_button = Button(self, text="Q Learning",
-                                command=self.q_learning(int(episode.get())))
+                                command=self.q_learning)
         qlearning_button.configure(width=10, activebackground="#33B5E5")
         canvas.create_window(self.field_width * UNIT * 0.4, (self.field_height * UNIT) + 10,
                              window=qlearning_button)
         dqn_button = Button(self, text="Deep Q Learning",
                             command=self.deep_q_learning)
-        dqn_button.configure(width=10, activebackground="#33B5E5")
+        dqn_button.configure(width=15, activebackground="#33B5E5")
         canvas.create_window(self.field_width * UNIT * 0.6, self.field_height * UNIT + 10,
                              window=dqn_button)
         reset_button = Button(self, text="reset", command=self.env.reset())
@@ -66,46 +109,17 @@ class GraphicDisplay(tk.Tk):
         canvas.create_window(self.field_width * UNIT * 0.8, self.field_height * UNIT + 10,
                             window=reset_button)
 
-        # 그리드 생성
-        for col in range(0, self.field_width * UNIT, UNIT):  # 0~400 by 80
-            x0, y0, x1, y1 = col, 0, col, self.field_height * UNIT
-            canvas.create_line(x0, y0, x1, y1)
-        for row in range(0, self.field_height * UNIT, UNIT):  # 0~400 by 80
-            x0, y0, x1, y1 = 0, row, self.field_height * UNIT, row
-            canvas.create_line(x0, y0, x1, y1)
-
-        # 캔버스에 이미지 추가
-        # start, agent
-        start_x, start_y = self.box_data[0][0], self.box_data[0][1]
-        canvas.create_image(start_x*100+50, start_y*100+50, image=self.boxes[0])
-        self.agent_icon = canvas.create_image(start_x*100+50, start_y*100+50, image=self.icons[0])
-        # resource
-        resource_dict = self.box_data[1]
-        for key in resource_dict:
-            for location in resource_dict[key].locations:
-                canvas.create_image(location[0]*100+50, location[1]*100+50, image=self.boxes[1])
-        # obstacle
-        obstacle_dict = self.box_data[2]
-        for key in obstacle_dict:
-            for location in obstacle_dict[key].locations:
-                canvas.create_image(location[0]*100+50, location[1]*100+50, image=self.boxes[2])
-        # project
-        project_dict = self.box_data[3]
-        self.project_box_dict = dict()
-        for key in project_dict:
-            for location in project_dict[key].locations:
-                self.project_box_dict[key] = canvas.create_image(location[0]*100+50, location[1]*100+50, image=self.boxes[3])
-
-        canvas.pack()
-
         return canvas
     
     def render(self):
         time.sleep(0.1)
         self.canvas.tag_raise(self.agent_icon)
+        self.workday.set('Remaining working day: '+ str(self.env.work_day))
+        self.worktime.set('Remaining day work time: '+ str(self.env.day_work_time))
         self.update()
     
-    def q_learning(self, episode):
+    def q_learning(self):
+        episode = int(self.episode_entry.get())
 
         for n_epi in range(episode):
             done = False
@@ -119,7 +133,7 @@ class GraphicDisplay(tk.Tk):
 
                 self.render()
                 # agent icon move
-                self.canvas.move(self.agent_icon, (s_prime[0]-s[0])*100-50, (s_prime[1]-s[1])*100-50)
+                self.canvas.move(self.agent_icon, (s_prime[1]-s[1])* UNIT, (s_prime[0]-s[0])* UNIT)
                 # project icon off
                 field_name = self.field_data[s_prime[0]][s_prime[1]]
                 if 'project' in field_name:
