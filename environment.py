@@ -66,6 +66,7 @@ class Env:
         self.day_work_time = 100
 
         return self.start
+        # return (agent_inventory, agent_ride, agent_payload, agent_location)
 
     def get_field_data(self):
         return self.field_data, (self.start, self.resource_dict, self.obstacle_dict, self.project_dict)
@@ -109,6 +110,7 @@ class Env:
         done = self.is_done()
 
         return self.agent_location, reward, done
+        # return (agent_inventory, agent_ride, agent_payload, agent_location), reward, done
 
     def is_done(self):
         # 지정된 작업 일수가 지나면 종료
