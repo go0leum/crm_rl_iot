@@ -7,7 +7,7 @@ from data_loader import DataLoader
 MaterialMaxQuota = 1 # material 종류 별 하루 최대 할당량
 EquipmentMaxQuota = 1 # equipment 종류 별 하루 최대 할당량
 WorkableWeight = 8 # agent의 payload가 일정값 이상일 때만 작업 가능
-WorkDay = 30 # 총 작업 일수
+WorkDay = 5 # 총 작업 일수
 
 MoveTime = 1 # 이동 소요 시간
 MaterialLoadUnloadTime = 10 # material load, unload 소요 시간
@@ -64,6 +64,7 @@ class Env:
 
         self.resource_day_quota = dict.fromkeys(self.resources, 0) # 하루에 할당된 자원의 양
         self.day_work_time = 100
+        self.work_day = WorkDay
 
         return self.start
 
@@ -111,8 +112,10 @@ class Env:
         return self.agent_location, reward, done
 
     def is_done(self):
-        # 지정된 작업 일수가 지나면 종료
+        # 지정된 작업 일수가 지나면 종료, 모든 프로젝트가 완료되면 종료
         if self.work_day < 1:
+            return True
+        elif False not in [self.project_dict[key].status for key in self.project_dict.keys()]:
             return True
         else:
             False
