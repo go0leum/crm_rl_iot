@@ -131,16 +131,16 @@ class GraphicDisplay(tk.Tk):
                 s_prime, r, done = self.env.step(a) # action을 수행하고 다음 상태, 보상, 종료 flag를 받아온다.
                 self.q_agent.update_table((s,a,r,s_prime)) # 그리디에 의해서 table을 업데이트 한다.
 
-                self.render()
                 # agent icon move
                 self.canvas.move(self.agent_icon, (s_prime[1]-s[1])* UNIT, (s_prime[0]-s[0])* UNIT)
-                
+
                 # project icon off
                 field_name = self.field_data[s_prime[0]][s_prime[1]]
                 if 'project' in field_name:
                     if self.box_data[3][field_name].status:
                         self.canvas.itemconfig(self.project_box_dict[field_name], image=self.boxes[4])
-
+                
+                self.render()
                 s = s_prime
 
             self.q_agent.anneal_eps() # epsilon을 점차 줄어들게 한다.
