@@ -196,10 +196,10 @@ class Action:
         x = self.env.agent_location[1]
         
         self.env.day_work_time -= MaterialLoadUnloadTime
-        
-        if self.env.agent_payload < 1: # 적재 가능 용량이 부족할 때
+
+        if 'resource' not in self.field_data[y][x]:
             return -MaterialLoadUnloadTime
-        elif 'resource' not in self.field_data[y][x]:
+        elif self.env.agent_payload < 1: # 적재 가능 용량이 부족할 때
             return -MaterialLoadUnloadTime
         else:
             resource_check = self.resource_check(self.field_data[y][x])
@@ -228,7 +228,7 @@ class Action:
         self.env.day_work_time -= MaterialLoadUnloadTime
 
         if 'project' not in self.field_data[y][x]: # project 위치가 아닐 때
-            return MaterialLoadUnloadTime
+            return -MaterialLoadUnloadTime
         elif self.project_check(self.field_data[y][x]) == True: # 완료된 project 일 때
             return -MaterialLoadUnloadTime
         else:
@@ -260,11 +260,13 @@ class Action:
         
         self.env.day_work_time -= EquipmentGetOnOffTime
 
-        if self.env.agent_ride != None: # 다른 장비를 타고 있는 상태일 때 탑승 불가
+        if 'resource' not in self.field_data[y][x]: # resource 위치가 아닐 때
+            return -EquipmentGetOnOffTime
+        elif self.env.agent_ride != None: # 다른 장비를 타고 있는 상태일 때 탑승 불가
             return -EquipmentGetOnOffTime
         elif self.env.agent_payload < 10: # inventory에 material 있으면 탑승 불가
             return -EquipmentGetOnOffTime
-        elif 'resource' in self.field_data[y][x]: # 장비를 얻을 수 있는 위치일 때
+        else:
             resource_check = self.resource_check(self.field_data[y][x])
             equipment_list = [equipment for equipment in resource_check.keys() if 'equipment' in equipment]
 
@@ -317,6 +319,8 @@ class Action:
                         self.env.task_dict.resource_status[idx] = True
                         return -EquipmentGetOnOffTime + ResourceDone
             
+            return -EquipmentGetOnOffTime
+        else:
             return -EquipmentGetOnOffTime
 
     def work(self):
