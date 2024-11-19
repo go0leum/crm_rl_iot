@@ -15,22 +15,20 @@ def evaluate_agent(model, env, num_episodes=1):
         print(f"\n에피소드 {episode + 1} 시작")
         
         while not done:
-            # 20 스텝 이후 에피소드 종료 (max_actions와 동일하게 설정)
-            if step >= 20:
+            if step >= 25:
                 print("\n최대 스텝 수(20)에 도달하여 에피소드를 종료합니다.")
                 break
                 
             action, _ = model.predict(obs, deterministic=True)
             action = int(action)
 
-            # if step < 15:
-            #     action = action_sequence(step)
-
             # 현재 상태와 행동 출력
             print(f"\n스텝 {step + 1}:")
             print(f"에이전트 위치: ({obs[0]}, {obs[1]})")
-            print(f"보유 리소스: {obs[2]}")
-            print(f"프로젝트 상태: {obs[3:5]}")
+            print(f"리소스 상태:")
+            print(f"- 리소스1: {'보유 중' if obs[2] == 1 else '미보유'}")
+            print(f"- 리소스2: {'보유 중' if obs[3] == 1 else '미보유'}")
+            print(f"프로젝트 상태: {obs[4:6]}")
             
             # 행동 설명
             action_desc = {
@@ -49,7 +47,7 @@ def evaluate_agent(model, env, num_episodes=1):
             print(f"보상: {reward}")
             
             # 프로젝트 상태 설명
-            for i, state in enumerate(obs[3:5]):
+            for i, state in enumerate(obs[4:6]):
                 status = {
                     0: "준비 안됨",
                     1: "준비 완료",

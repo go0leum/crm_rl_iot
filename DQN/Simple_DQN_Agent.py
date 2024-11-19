@@ -10,25 +10,27 @@ class SimpleConstructionEnv(gym.Env):
         # 상태 인덱스 상수 정의
         self.IDX_POS_X = 0
         self.IDX_POS_Y = 1
-        self.IDX_RESOURCE = 2
-        self.IDX_PROJECT_START = 3
-        self.IDX_PROJECT_END = 5
+        self.IDX_RESOURCE_1 = 2
+        self.IDX_RESOURCE_2 = 3
+        self.IDX_PROJECT_START = 4
+        self.IDX_PROJECT_END = 6
         
         # 액션 공간 정의 (이동, 리소스 픽업/드롭, 태스크 실행)
         self.action_space = gym.spaces.Discrete(7)
         
         # 관찰 공간 정의
-        # [에이전트 위치(x,y), 보유 리소스 상태, 프로젝트별 태스크 상태]
+        # [에이전트 위치(x,y), 리소스1 보유 상태, 리소스2 보유 상태, 프로젝트별 태스크 상태]
         self.observation_space = gym.spaces.MultiDiscrete([
             3, 3,  # 에이전트 위치 (3x3 그리드)
-            2,     # 리소스 보유 상태
+            2, 2,  # 리소스1, 리소스2 보유 상태
             3, 3   # 프로젝트 태스크 상태 (3단계: 준비안됨/준비됨/완료)
         ])
         
         # 위치 정보 설정
         self.agent_start_pos = [0, 0]
         self.project_positions = [[2, 1], [2, 2]]  # 2개의 프로젝트 위치
-        self.resource_pos = [1, 1]    # 중앙에 리소스 위치
+        self.resource1_pos = [1, 0]    # 리소스1 위치
+        self.resource2_pos = [1, 2]    # 리소스2 위치
         
         # 일일 행동 제한
         self.max_actions = 20
@@ -46,8 +48,8 @@ class SimpleConstructionEnv(gym.Env):
         
         self.state = np.array([
             self.agent_pos[0], self.agent_pos[1],  # 에이전트 위치
-            0,  # 리소스 보유 상태
-            0, 0  # 프로젝트 태스크 상태
+            0, 0,  # 리소스1, 리소스2 보유 상태
+            0, 0   # 프로젝트 태스크 상태
         ])
         return self.state, {}
 
@@ -93,16 +95,24 @@ class SimpleConstructionEnv(gym.Env):
         return -5
 
     def _pickup_resource(self):
-        if self.agent_pos != self.resource_pos:
-            return -5
-        if self.state[self.IDX_RESOURCE] == 1:
+        # 리소스1 픽업
+        if self.agent_pos == self.resource1_pos:
+            if self.state[self.IDX_RESOURCE_1] == 0:
+                self.state[self.IDX_RESOURCE_1] = 1
+                return 10
             return -5
             
-        self.state[self.IDX_RESOURCE] = 1
-        return 10
+        # 리소스2 픽업
+        if self.agent_pos == self.resource2_pos:
+            if self.state[self.IDX_RESOURCE_2] == 0:
+                self.state[self.IDX_RESOURCE_2] = 1
+                return 10
+            return -5
+            
+        return -5
 
     def _dropoff_resource(self):
-        if self.state[self.IDX_RESOURCE] == 0:
+        if self.state[self.IDX_RESOURCE_1] == 0 and self.state[self.IDX_RESOURCE_2] == 0:
             return -5
             
         current_project = None
@@ -118,8 +128,15 @@ class SimpleConstructionEnv(gym.Env):
         if self.state[self.IDX_PROJECT_START + current_project] == 2:
             return -10
             
-        self.project_resources[current_project] = 1
-        self.state[self.IDX_RESOURCE] = 0
+        # 프로젝트별 올바른 리소스 확인
+        if current_project == 0 and self.state[self.IDX_RESOURCE_1] == 1:
+            self.project_resources[current_project] = 1
+            self.state[self.IDX_RESOURCE_1] = 0
+        elif current_project == 1 and self.state[self.IDX_RESOURCE_2] == 1:
+            self.project_resources[current_project] = 1
+            self.state[self.IDX_RESOURCE_2] = 0
+        else:
+            return -5  # 잘못된 리소스를 가져온 경우
         
         if self.project_resources[current_project] == 1:
             self.state[self.IDX_PROJECT_START + current_project] = 1
