@@ -28,7 +28,19 @@ def evaluate_agent(model, env, num_episodes=1):
             print(f"리소스 상태:")
             print(f"- 리소스1: {'보유 중' if obs[2] == 1 else '미보유'}")
             print(f"- 리소스2: {'보유 중' if obs[3] == 1 else '미보유'}")
-            print(f"프로젝트 상태: {obs[4:6]}")
+            
+            # 프로젝트 상태 설명 수정
+            status = {
+                0: "준비 안됨",
+                1: "준비 완료",
+                2: "완료"
+            }
+            print("\n프로젝트 상태:")
+            print(f"프로젝트 1:")
+            print(f"- 리소스1: {status[obs[4]]}")
+            print(f"프로젝트 2:")
+            print(f"- 리소스1: {status[obs[5]]}")
+            print(f"- 리소스2: {status[obs[7]]}")
             
             # 행동 설명
             action_desc = {
@@ -45,15 +57,6 @@ def evaluate_agent(model, env, num_episodes=1):
             obs, reward, done, _, _ = env.step(action)
             episode_reward += reward
             print(f"보상: {reward}")
-            
-            # 프로젝트 상태 설명
-            for i, state in enumerate(obs[4:6]):
-                status = {
-                    0: "준비 안됨",
-                    1: "준비 완료",
-                    2: "완료"
-                }
-                print(f"프로젝트 {i+1}: {status[state]}")
             
             step += 1
             

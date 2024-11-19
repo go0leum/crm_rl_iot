@@ -13,17 +13,17 @@ class SimpleConstructionEnv(gym.Env):
         self.IDX_RESOURCE_1 = 2
         self.IDX_RESOURCE_2 = 3
         self.IDX_PROJECT_START = 4
-        self.IDX_PROJECT_END = 6
+        self.IDX_PROJECT_END = 8  # 프로젝트 상태 4개로 증가
         
         # 액션 공간 정의 (이동, 리소스 픽업/드롭, 태스크 실행)
         self.action_space = gym.spaces.Discrete(7)
         
-        # 관찰 공간 정의
-        # [에이전트 위치(x,y), 리소스1 보유 상태, 리소스2 보유 상태, 프로젝트별 태스크 상태]
+        # 관찰 공간 정의 수정
         self.observation_space = gym.spaces.MultiDiscrete([
             3, 3,  # 에이전트 위치 (3x3 그리드)
             2, 2,  # 리소스1, 리소스2 보유 상태
-            3, 3   # 프로젝트 태스크 상태 (3단계: 준비안됨/준비됨/완료)
+            3, 3,  # 프로젝트1 리소스1 상태, 프로젝트2 리소스1 상태 (0: 미시작, 1: 진행중, 2: 완료)
+            3, 3   # 프로젝트1 리소스2 상태, 프로젝트2 리소스2 상태 (0: 미시작, 1: 진행중, 2: 완료)
         ])
         
         # 위치 정보 설정
@@ -44,12 +44,12 @@ class SimpleConstructionEnv(gym.Env):
     def reset(self, seed=None, options=None):
         self.agent_pos = self.agent_start_pos.copy()
         self.action_count = 0
-        self.project_resources = [0, 0]
         
         self.state = np.array([
             self.agent_pos[0], self.agent_pos[1],  # 에이전트 위치
             0, 0,  # 리소스1, 리소스2 보유 상태
-            0, 0   # 프로젝트 태스크 상태
+            0, 0,  # 프로젝트1 리소스1, 프로젝트2 리소스1
+            0, 0   # 프로젝트1 리소스2, 프로젝트2 리소스2
         ])
         return self.state, {}
 
@@ -121,26 +121,27 @@ class SimpleConstructionEnv(gym.Env):
                 current_project = i
                 break
                 
+        # 프로젝트 위치가 아닌 곳에서 드롭하면 리소스만 잃고 페널티
         if current_project is None:
+            self.state[self.IDX_RESOURCE_1] = 0
+            self.state[self.IDX_RESOURCE_2] = 0
             return -5
             
-        # 이미 완료된 프로젝트인 경우 페널티
-        if self.state[self.IDX_PROJECT_START + current_project] == 2:
-            return -10
+        # 리소스1 드롭
+        if self.state[self.IDX_RESOURCE_1] == 1:
+            self.state[self.IDX_RESOURCE_1] = 0  # 항상 리소스 상태 초기화
+            if self.state[self.IDX_PROJECT_START + current_project] == 0:  # 리소스1 상태
+                self.state[self.IDX_PROJECT_START + current_project] = 1
+                return 10
+            return -5
             
-        # 프로젝트별 올바른 리소스 확인
-        if current_project == 0 and self.state[self.IDX_RESOURCE_1] == 1:
-            self.project_resources[current_project] = 1
-            self.state[self.IDX_RESOURCE_1] = 0
-        elif current_project == 1 and self.state[self.IDX_RESOURCE_2] == 1:
-            self.project_resources[current_project] = 1
-            self.state[self.IDX_RESOURCE_2] = 0
-        else:
-            return -5  # 잘못된 리소스를 가져온 경우
-        
-        if self.project_resources[current_project] == 1:
-            self.state[self.IDX_PROJECT_START + current_project] = 1
-            return 10
+        # 리소스2 드롭
+        if self.state[self.IDX_RESOURCE_2] == 1:
+            self.state[self.IDX_RESOURCE_2] = 0  # 항상 리소스 상태 초기화
+            if self.state[self.IDX_PROJECT_START + current_project + 2] == 0:  # 리소스2 상태
+                self.state[self.IDX_PROJECT_START + current_project + 2] = 1
+                return 10
+            return -5
             
         return -5
 
@@ -154,18 +155,29 @@ class SimpleConstructionEnv(gym.Env):
         if current_project is None:
             return -5
             
-        # 이미 완료된 프로젝트인 경우 페널티
-        if self.state[self.IDX_PROJECT_START + current_project] == 2:
-            return -10
-            
-        if self.state[self.IDX_PROJECT_START + current_project] == 1:
-            self.state[self.IDX_PROJECT_START + current_project] = 2
-            return 20
-            
+        # 프로젝트1은 리소스1만 필요
+        if current_project == 0:
+            if self.state[self.IDX_PROJECT_START + current_project] == 1:
+                self.state[self.IDX_PROJECT_START + current_project] = 2
+                return 20
+                
+        # 프로젝트2는 리소스1과 리소스2 모두 필요
+        elif current_project == 1:
+            if (self.state[self.IDX_PROJECT_START + current_project] == 1 and 
+                self.state[self.IDX_PROJECT_START + current_project + 2] == 1):
+                self.state[self.IDX_PROJECT_START + current_project] = 2
+                self.state[self.IDX_PROJECT_START + current_project + 2] = 2
+                return 20
+                
         return -5
 
     def _all_projects_complete(self):
-        return all(self.state[self.IDX_PROJECT_START:self.IDX_PROJECT_END] == 2)
+        # 프로젝트1은 리소스1만 확인
+        proj1_complete = self.state[self.IDX_PROJECT_START] == 2
+        # 프로젝트2는 리소스1과 리소스2 모두 확인
+        proj2_complete = (self.state[self.IDX_PROJECT_START + 1] == 2 and 
+                         self.state[self.IDX_PROJECT_START + 3] == 2)
+        return proj1_complete and proj2_complete
 
 if __name__ == "__main__":
     env = SimpleConstructionEnv()
@@ -188,5 +200,5 @@ if __name__ == "__main__":
         verbose=1,
         tensorboard_log="./crm_rl_iot/DQN/log/dqn_tensorboard/"
     )
-    model.learn(total_timesteps=50000)
+    model.learn(total_timesteps=70000)
     model.save("simple_construction_dqn") 
