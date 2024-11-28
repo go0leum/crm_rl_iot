@@ -25,7 +25,7 @@ class SimpleConstructionEnv(gym.Env):
             3, 3,  # 프로젝트1-태스크1 리소스1, 리소스2 상태
             3, 3,  # 프로젝트1-태스크2 리소스1, 리소스2 상태
             3, 3,  # 프로젝트2-태스크1 리소스1, 리소스2 상태
-            3      # 프로젝트2-태스크2 리소스1 상태
+            3, 3   # 프로젝트2-태스크2 리소스1, 리소스2 상태
         ])
         
         # 위치 정보 설정
@@ -53,7 +53,7 @@ class SimpleConstructionEnv(gym.Env):
             0, 0,  # 프로젝트1-태스크1 리소스1, 리소스2 상태
             0, 0,  # 프로젝트1-태스크2 리소스1, 리소스2 상태
             0, 0,  # 프로젝트2-태스크1 리소스1, 리소스2 상태
-            0      # 프로젝트2-태스크2 리소스1 상태
+            0, 0   # 프로젝트2-태스크2 리소스1, 리소스2 상태
         ])
         return self.state, {}
 
@@ -115,23 +115,6 @@ class SimpleConstructionEnv(gym.Env):
             
         return -5
 
-    def _drop_resource_at_task(self, resource_idx, task_start_idx, resource_slot):
-        """특정 태스크에 리소스를 드롭하는 헬퍼 메서드
-        
-        Args:
-            resource_idx: 드롭할 리소스 인덱스 (IDX_RESOURCE_1 또는 IDX_RESOURCE_2)
-            task_start_idx: 태스크의 시작 인덱스
-            resource_slot: 태스크에서 리소스가 들어갈 슬롯 위치
-            
-        Returns:
-            bool: 리소스 드롭 성공 여부
-        """
-        if self.state[resource_idx] == 1 and self.state[task_start_idx + resource_slot] == 0:
-            self.state[resource_idx] = 0
-            self.state[task_start_idx + resource_slot] = 1
-            return True
-        return False
-
     def _dropoff_resource(self):
         # 리소스를 보유하고 있지 않은 경우
         if self.state[self.IDX_RESOURCE_1] == 0 and self.state[self.IDX_RESOURCE_2] == 0:
@@ -154,28 +137,46 @@ class SimpleConstructionEnv(gym.Env):
         
         # 프로젝트1 처리
         if current_project == 0:
-            # 태스크1 (리소스1만 필요)
-            if self._drop_resource_at_task(self.IDX_RESOURCE_1, self.IDX_PROJECT_START, 0):
-                reward = 10
-            # 태스크2 (리소스1, 리소스2 필요)
-            elif self._drop_resource_at_task(self.IDX_RESOURCE_1, self.IDX_PROJECT_START + 2, 0):
-                reward = 10
+            # 리소스1을 드롭하는 경우
+            if self.state[self.IDX_RESOURCE_1] == 1:
+                # 태스크1과 태스크2 모두에 리소스1 적용
+                if self.state[self.IDX_PROJECT_START] == 0:  # 태스크1 리소스1
+                    self.state[self.IDX_PROJECT_START] = 1
+                    self.state[self.IDX_RESOURCE_1] = 0
+                    reward = 10
+                if self.state[self.IDX_PROJECT_START + 2] == 0:  # 태스크2 리소스1
+                    self.state[self.IDX_PROJECT_START + 2] = 1
+                    self.state[self.IDX_RESOURCE_1] = 0
+                    reward = 10
             
-            if self._drop_resource_at_task(self.IDX_RESOURCE_2, self.IDX_PROJECT_START + 2, 1):
-                reward = 10
+            # 리소스2를 드롭하는 경우 (태스크2에만 필요)
+            if self.state[self.IDX_RESOURCE_2] == 1:
+                if self.state[self.IDX_PROJECT_START + 3] == 0:  # 태스크2 리소스2
+                    self.state[self.IDX_PROJECT_START + 3] = 1
+                    self.state[self.IDX_RESOURCE_2] = 0
+                    reward = 10
                 
         # 프로젝트2 처리
         else:
             base_idx = self.IDX_PROJECT_START + 4
-            # 태스크1 (리소스1, 리소스2 필요)
-            if self._drop_resource_at_task(self.IDX_RESOURCE_1, base_idx, 0):
-                reward = 10
-            # 태스크2 (리소스1만 필요)
-            elif self._drop_resource_at_task(self.IDX_RESOURCE_1, base_idx + 2, 0):
-                reward = 10
+            # 리소스1을 드롭하는 경우
+            if self.state[self.IDX_RESOURCE_1] == 1:
+                # 태스크1과 태스크2 모두에 리소스1 적용
+                if self.state[base_idx] == 0:  # 태스크1 리소스1
+                    self.state[base_idx] = 1
+                    self.state[self.IDX_RESOURCE_1] = 0
+                    reward = 10
+                if self.state[base_idx + 2] == 0:  # 태스크2 리소스1
+                    self.state[base_idx + 2] = 1
+                    self.state[self.IDX_RESOURCE_1] = 0
+                    reward = 10
             
-            if self._drop_resource_at_task(self.IDX_RESOURCE_2, base_idx, 1):
-                reward = 10
+            # 리소스2를 드롭하는 경우 (태스크2에만 필요)
+            if self.state[self.IDX_RESOURCE_2] == 1:
+                if self.state[base_idx + 3] == 0:  # 태스크2 리소스2
+                    self.state[base_idx + 3] = 1
+                    self.state[self.IDX_RESOURCE_2] = 0
+                    reward = 10
                 
         return reward
 
@@ -225,11 +226,11 @@ class SimpleConstructionEnv(gym.Env):
         # 프로젝트2 처리
         else:
             base_idx = self.IDX_PROJECT_START + 4
-            # 태스크1 실행 (리소스1과 리소스2 필요)
-            if self._execute_single_task(base_idx, 2):
+            # 태스크1 실행 (리소스1만 필요)
+            if self._execute_single_task(base_idx, 1):
                 return 20
-            # 태스크2 실행 (리소스1만 필요)
-            if self._execute_single_task(base_idx + 2, 1):
+            # 태스크2 실행 (리소스1과 리소스2 필요)
+            if self._execute_single_task(base_idx + 2, 2):
                 return 20
                 
         return -5
@@ -242,10 +243,10 @@ class SimpleConstructionEnv(gym.Env):
         
         # 프로젝트2의 두 태스크 모두 완료 확인
         base_idx = self.IDX_PROJECT_START + 4
-        proj2_task1_complete = (self.state[base_idx] == 2 and 
-                               self.state[base_idx + 1] == 2)
-        proj2_task2_complete = self.state[base_idx + 2] == 2
-                         
+        proj2_task1_complete = self.state[base_idx] == 2
+        proj2_task2_complete = (self.state[base_idx + 2] == 2 and 
+                               self.state[base_idx + 3] == 2)
+        
         return (proj1_task1_complete and proj1_task2_complete and 
                 proj2_task1_complete and proj2_task2_complete)
 

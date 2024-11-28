@@ -11,7 +11,7 @@ def evaluate_agent(model, env, num_episodes=1):
         print(f"\n에피소드 {episode + 1} 시작")
         
         while not done:
-            if step >= 35:
+            if step >= 45:
                 print("\n최대 스텝 수(35)에 도달하여 에피소드를 종료합니다.")
                 break
                 
@@ -40,11 +40,11 @@ def evaluate_agent(model, env, num_episodes=1):
             print(f"  - 리소스2: {status[obs[7]]}")
             
             print(f"프로젝트 2:")
-            print(f"- 태스크 1 (리소스1, 리소스2 필요):")
+            print(f"- 태스크 1 (리소스1 필요):")
             print(f"  - 리소스1: {status[obs[8]]}")
-            print(f"  - 리소스2: {status[obs[9]]}")
-            print(f"- 태스크 2 (리소스1 필요):")
+            print(f"- 태스크 2 (리소스1, 리소스2 필요):")
             print(f"  - 리소스1: {status[obs[10]]}")
+            print(f"  - 리소스2: {status[obs[11]]}")
             
             # 행동 설명
             action_desc = {
@@ -52,8 +52,8 @@ def evaluate_agent(model, env, num_episodes=1):
                 1: "오른쪽으로 이동",
                 2: "아래로 이동",
                 3: "왼쪽으로 이동",
-                4: "리소스1 픽업/드롭",
-                5: "리소스2 픽업/드롭",
+                4: "리소스 픽업",
+                5: "리소스 드롭",
                 6: "태스크 실행"
             }
             print(f"선택한 행동: {action_desc[action]}")
