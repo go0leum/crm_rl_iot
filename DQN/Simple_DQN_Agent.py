@@ -12,8 +12,9 @@ class SimpleConstructionEnv(gym.Env):
         self.IDX_POS_Y = 1
         self.IDX_RESOURCE_1 = 2
         self.IDX_RESOURCE_2 = 3
-        self.IDX_PROJECT_START = 4
-        self.IDX_PROJECT_END = 12  # 프로젝트1의 2개 태스크 + 프로젝트2의 2개 태스크
+        self.IDX_DAY_TYPE = 4
+        self.IDX_PROJECT_START = 5
+        self.IDX_PROJECT_END = 13  # 프로젝트1의 2개 태스크 + 프로젝트2의 2개 태스크
         
         # 액션 공간 정의 (이동, 리소스 픽업/드롭, 태스크 실행)
         self.action_space = gym.spaces.Discrete(7)
@@ -22,6 +23,7 @@ class SimpleConstructionEnv(gym.Env):
         self.observation_space = gym.spaces.MultiDiscrete([
             3, 3,  # 에이전트 위치 (3x3 그리드)
             2, 2,  # 리소스1, 리소스2 보유 상태
+            2,     # 현재 날짜 타입 (짝수/홀수)
             3, 3,  # 프로젝트1-태스크1 리소스1, 리소스2 상태
             3, 3,  # 프로젝트1-태스크2 리소스1, 리소스2 상태
             3, 3,  # 프로젝트2-태스크1 리소스1, 리소스2 상태
@@ -34,9 +36,11 @@ class SimpleConstructionEnv(gym.Env):
         self.resource1_pos = [1, 0]    # 리소스1 위치
         self.resource2_pos = [1, 2]    # 리소스2 위치
         
-        # 일일 행동 제한
-        self.max_actions = 60
+        # 일일 행동 제한 수정
+        self.max_actions = 20
         self.action_count = 0
+        self.current_day = 0  # 현재 날짜 추가
+        self.available_resources = [True, False]  # 리소스 사용 가능 상태
         
         # 프로젝트별 리소스 현황 추적
         self.project_resources = [0, 0]  # 각 프로젝트의 리소스 보유 현황
@@ -46,10 +50,13 @@ class SimpleConstructionEnv(gym.Env):
     def reset(self, seed=None, options=None):
         self.agent_pos = self.agent_start_pos.copy()
         self.action_count = 0
+        self.current_day = 0
+        self.available_resources = [True, False]  # 첫날은 리소스1만 사용 가능
         
         self.state = np.array([
             self.agent_pos[0], self.agent_pos[1],  # 에이전트 위치
             0, 0,  # 리소스1, 리소스2 보유 상태
+            0,     # 현재 날짜 타입 (0: 짝수날, 1: 홀수날)
             0, 0,  # 프로젝트1-태스크1 리소스1, 리소스2 상태
             0, 0,  # 프로젝트1-태스크2 리소스1, 리소스2 상태
             0, 0,  # 프로젝트2-태스크1 리소스1, 리소스2 상태
@@ -58,26 +65,32 @@ class SimpleConstructionEnv(gym.Env):
         return self.state, {}
 
     def step(self, action):
-        reward = -1  # 기본 리워드
+        reward = -1
         done = False
         
-        # 액션 제한 확인
-        if self.action_count >= self.max_actions:
-            done = True
-            return self.state, -10, done, False, {}
-            
         # 액션 처리
         if action < 4:  # 이동
+            self.action_count += 1
             reward = self._move(action)
         elif action == 4:  # 리소스 픽업
+            self.action_count += 5
             reward = self._pickup_resource()
         elif action == 5:  # 리소스 드롭
+            self.action_count += 5
             reward = self._dropoff_resource()
         elif action == 6:  # 태스크 실행
+            self.action_count += 10
             reward = self._execute_task()
             
-        self.action_count += 1
-        
+        # 일일 행동 제한 초과 시 다음날로 전환
+        if self.action_count >= self.max_actions:
+            self.action_count = 0
+            self.current_day += 1
+            # 리소스 사용 가능 상태 전환
+            self.available_resources = [not r for r in self.available_resources]
+            # 날짜 타입 업데이트 (짝수날: 0, 홀수날: 1)
+            self.state[self.IDX_DAY_TYPE] = self.current_day % 2
+            
         # 모든 프로젝트가 완료되면 종료
         if self._all_projects_complete():
             done = True
@@ -101,14 +114,14 @@ class SimpleConstructionEnv(gym.Env):
     def _pickup_resource(self):
         # 리소스1 픽업
         if self.agent_pos == self.resource1_pos:
-            if self.state[self.IDX_RESOURCE_1] == 0:
+            if self.state[self.IDX_RESOURCE_1] == 0 and self.available_resources[0]:
                 self.state[self.IDX_RESOURCE_1] = 1
                 return 10
             return -5
             
         # 리소스2 픽업
         if self.agent_pos == self.resource2_pos:
-            if self.state[self.IDX_RESOURCE_2] == 0:
+            if self.state[self.IDX_RESOURCE_2] == 0 and self.available_resources[1]:
                 self.state[self.IDX_RESOURCE_2] = 1
                 return 10
             return -5

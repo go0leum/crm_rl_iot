@@ -11,15 +11,13 @@ def evaluate_agent(model, env, num_episodes=1):
         print(f"\n에피소드 {episode + 1} 시작")
         
         while not done:
-            if step >= 45:
-                print("\n최대 스텝 수(35)에 도달하여 에피소드를 종료합니다.")
-                break
-                
             action, _ = model.predict(obs, deterministic=True)
             action = int(action)
 
             # 현재 상태와 행동 출력
             print(f"\n스텝 {step + 1}:")
+            print(f"현재 날짜 타입: {'짝수날 (리소스1 사용 가능)' if obs[4] == 0 else '홀수날 (리소스2 사용 가능)'}")
+            print(f"남은 행동 포인트: {env.max_actions - env.action_count}/20")
             print(f"에이전트 위치: ({obs[0]}, {obs[1]})")
             print(f"리소스 상태:")
             print(f"- 리소스1: {'보유 중' if obs[2] == 1 else '미보유'}")
@@ -34,27 +32,27 @@ def evaluate_agent(model, env, num_episodes=1):
             print("\n프로젝트 상태:")
             print(f"프로젝트 1:")
             print(f"- 태스크 1 (리소스1 필요):")
-            print(f"  - 리소스1: {status[obs[4]]}")
+            print(f"  - 리소스1: {status[obs[5]]}")
             print(f"- 태스크 2 (리소스1, 리소스2 필요):")
-            print(f"  - 리소스1: {status[obs[6]]}")
-            print(f"  - 리소스2: {status[obs[7]]}")
+            print(f"  - 리소스1: {status[obs[7]]}")
+            print(f"  - 리소스2: {status[obs[8]]}")
             
             print(f"프로젝트 2:")
             print(f"- 태스크 1 (리소스1 필요):")
-            print(f"  - 리소스1: {status[obs[8]]}")
+            print(f"  - 리소스1: {status[obs[9]]}")
             print(f"- 태스크 2 (리소스1, 리소스2 필요):")
-            print(f"  - 리소스1: {status[obs[10]]}")
-            print(f"  - 리소스2: {status[obs[11]]}")
+            print(f"  - 리소스1: {status[obs[11]]}")
+            print(f"  - 리소스2: {status[obs[12]]}")
             
             # 행동 설명
             action_desc = {
-                0: "위로 이동",
-                1: "오른쪽으로 이동",
-                2: "아래로 이동",
-                3: "왼쪽으로 이동",
-                4: "리소스 픽업",
-                5: "리소스 드롭",
-                6: "태스크 실행"
+                0: "위로 이동 (1 포인트)",
+                1: "오른쪽으로 이동 (1 포인트)",
+                2: "아래로 이동 (1 포인트)",
+                3: "왼쪽으로 이동 (1 포인트)",
+                4: "리소스 픽업 (5 포인트)",
+                5: "리소스 드롭 (5 포인트)",
+                6: "태스크 실행 (10 포인트)"
             }
             print(f"선택한 행동: {action_desc[action]}")
             
