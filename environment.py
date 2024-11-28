@@ -64,6 +64,7 @@ class Env:
 
         self.resource_day_quota = dict.fromkeys(self.resources, 0) # 하루에 할당된 자원의 양
         self.day_work_time = 100
+        self.work_day = WorkDay
 
         return self.start
         # return (agent_inventory, agent_ride, agent_payload, agent_location)
@@ -113,8 +114,10 @@ class Env:
         # return (agent_inventory, agent_ride, agent_payload, agent_location), reward, done
 
     def is_done(self):
-        # 지정된 작업 일수가 지나면 종료
+        # 지정된 작업 일수가 지나면 종료, 모든 프로젝트가 완료되면 종료
         if self.work_day < 1:
+            return True
+        elif False not in [self.project_dict[key].status for key in self.project_dict.keys()]:
             return True
         else:
             False
@@ -123,9 +126,9 @@ class Action:
     # 소요시간: move- 1, material load-unload- 10, equipment get on-off- 1, work- 10
     def __init__(self, env):
         self.env = env
-        self.field_width = env.field_width
-        self.field_height = env.field_height
-        self.field_data = env.field_data
+        self.field_width = self.env.field_width
+        self.field_height = self.env.field_height
+        self.field_data = self.env.field_data
 
     def move_up(self):
         y = self.env.agent_location[0]-1
@@ -134,13 +137,13 @@ class Action:
         self.env.day_work_time -= MoveTime
 
         if y < 0:
-            pass
+            return -MoveTime
         elif 'obstacle' in self.field_data[y][x]:
-            pass
+            return -MoveTime
         else:
             self.env.agent_location = np.array((y, x))
         
-        return MoveTime
+        return -MoveTime
 
     def move_down(self):
         y = self.env.agent_location[0]+1
@@ -149,13 +152,13 @@ class Action:
         self.env.day_work_time -= MoveTime
 
         if y > self.field_height-1:
-            pass
+            return -MoveTime
         elif 'obstacle' in self.field_data[y][x]:
-            pass
+            return -MoveTime
         else:
             self.env.agent_location = np.array((y, x))
         
-        return MoveTime
+        return -MoveTime
       
     def move_left(self):
         y = self.env.agent_location[0]
@@ -164,13 +167,13 @@ class Action:
         self.env.day_work_time -= MoveTime
 
         if x < 0:
-            pass
+            return -MoveTime
         elif 'obstacle' in self.field_data[y][x]:
-            pass
+            return -MoveTime
         else:
             self.env.agent_location = np.array((y, x))
         
-        return MoveTime
+        return -MoveTime
 
     def move_right(self):
         y = self.env.agent_location[0]
@@ -179,13 +182,13 @@ class Action:
         self.env.day_work_time -= MoveTime
 
         if x > self.field_width-1:
-            pass
+            return -MoveTime
         elif 'obstacle' in self.field_data[y][x]:
-            pass
+            return -MoveTime
         else:
             self.env.agent_location = np.array((y, x))
         
-        return MoveTime
+        return -MoveTime
     
     def material_load(self):
         # resource 받는 위치에서만 load 가능
@@ -193,11 +196,11 @@ class Action:
         x = self.env.agent_location[1]
         
         self.env.day_work_time -= MaterialLoadUnloadTime
-        
-        if self.env.agnet_payload < 1: # 적재 가능 용량이 부족할 때
-            return MaterialLoadUnloadTime
-        elif 'resource' not in self.field_data[y][x]:
-            return MaterialLoadUnloadTime
+
+        if 'resource' not in self.field_data[y][x]:
+            return -MaterialLoadUnloadTime
+        elif self.env.agent_payload < 1: # 적재 가능 용량이 부족할 때
+            return -MaterialLoadUnloadTime
         else:
             resource_check = self.resource_check(self.field_data[y][x])
         
@@ -213,9 +216,9 @@ class Action:
                     self.env.agent_payload -= material.weight
                     self.env.agent_inventory[material_name] += 1
                     self.env.resource_day_quota[material_name] -= 1
-                    return MaterialLoadUnloadTime
+                    return -MaterialLoadUnloadTime
             
-            return MaterialLoadUnloadTime
+            return -MaterialLoadUnloadTime
     
     def material_unload(self):
         # 위치한 프로젝트와 관련있는 material만 unload 가능
@@ -225,9 +228,9 @@ class Action:
         self.env.day_work_time -= MaterialLoadUnloadTime
 
         if 'project' not in self.field_data[y][x]: # project 위치가 아닐 때
-            return MaterialLoadUnloadTime
+            return -MaterialLoadUnloadTime
         elif self.project_check(self.field_data[y][x]) == True: # 완료된 project 일 때
-            return MaterialLoadUnloadTime
+            return -MaterialLoadUnloadTime
         else:
             task_list = self.env.project_dict[self.field_data[y][x]].task_list
             for task_name in task_list:
@@ -235,8 +238,11 @@ class Action:
                 if task_status == True: # 완료된 task 일 때
                     continue
 
-                for resource_name, resource_status in task_resource_dict:
+                for resource_name, resource_status in task_resource_dict.items():
                     if resource_status == True: # 이미 있는 resource 일 때
+                        continue
+                    
+                    if 'equipment' in resource_name: # resource 가 equipment일때
                         continue
 
                     if self.env.agent_inventory[resource_name] > 0: # task에 필요한 resource가 있을 때
@@ -244,9 +250,9 @@ class Action:
                         self.env.agent_payload += self.env.resource_dict[resource_name].weight
                         idx = self.env.task_dict[task_name].resource_list.index(resource_name)
                         self.env.task_dict.resource_status[idx] = True
-                        return MaterialLoadUnloadTime + ResourceDone
+                        return -MaterialLoadUnloadTime + ResourceDone
             
-            return MaterialLoadUnloadTime
+            return -MaterialLoadUnloadTime
     
     def equipment_get_on(self):
         y = self.env.agent_location[0]
@@ -254,11 +260,13 @@ class Action:
         
         self.env.day_work_time -= EquipmentGetOnOffTime
 
-        if self.env.agent_ride != None: # 다른 장비를 타고 있는 상태일 때 탑승 불가
-            return EquipmentGetOnOffTime
+        if 'resource' not in self.field_data[y][x]: # resource 위치가 아닐 때
+            return -EquipmentGetOnOffTime
+        elif self.env.agent_ride != None: # 다른 장비를 타고 있는 상태일 때 탑승 불가
+            return -EquipmentGetOnOffTime
         elif self.env.agent_payload < 10: # inventory에 material 있으면 탑승 불가
-            return EquipmentGetOnOffTime
-        elif 'resource' in self.field_data[y][x]: # 장비를 얻을 수 있는 위치일 때
+            return -EquipmentGetOnOffTime
+        else:
             resource_check = self.resource_check(self.field_data[y][x])
             equipment_list = [equipment for equipment in resource_check.keys() if 'equipment' in equipment]
 
@@ -271,9 +279,9 @@ class Action:
                     self.env.agent_ride = equipment_name
                     self.env.resource_day_quota[equipment_name] -= 1
 
-                    return EquipmentGetOnOffTime
+                    return -EquipmentGetOnOffTime
             
-            return EquipmentGetOnOffTime
+            return -EquipmentGetOnOffTime
 
     def equipment_get_off(self):
         y = self.env.agent_location[0]
@@ -282,17 +290,17 @@ class Action:
         self.env.day_work_time -= EquipmentGetOnOffTime
 
         if self.env.agent_ride == None: # 장비 탑승 상태가 아닐 때
-            return EquipmentGetOnOffTime
+            return -EquipmentGetOnOffTime
         
         elif 'resource' in self.field_data[y][x]:
             if self.env.agnet_ride in self.env.resource_dict(self.field_data[y][x]).resource_list: # 장비 반납
                 self.env.agent_ride = None
                 self.env.resource_day_quota[self.env.agnet_ride] += 1
-                return EquipmentGetOnOffTime
+                return -EquipmentGetOnOffTime
             
         elif 'project' in self.field_data[y][x]: # project 위치일 때
             if self.project_check(self.field_data[y][x]) == True: # 완료된 project 일 때
-                return EquipmentGetOnOffTime
+                return -EquipmentGetOnOffTime
             
             task_list = self.env.project_dict[self.field_data[y][x]].task_list
 
@@ -301,7 +309,7 @@ class Action:
                 if task_status == True: # 완료된 task 일 때
                     continue
 
-                for resource_name, resource_status in task_resource_dict:
+                for resource_name, resource_status in task_resource_dict.items():
                     if resource_status == True: # 이미 있는 resource 일 때
                         continue
 
@@ -309,9 +317,11 @@ class Action:
                         idx = self.env.task_dict[task_name].resource_list.index(resource_name)
                         self.env.agent_ride = None
                         self.env.task_dict.resource_status[idx] = True
-                        return EquipmentGetOnOffTime + ResourceDone
+                        return -EquipmentGetOnOffTime + ResourceDone
             
-            return EquipmentGetOnOffTime
+            return -EquipmentGetOnOffTime
+        else:
+            return -EquipmentGetOnOffTime
 
     def work(self):
         y = self.env.agent_location[0]
@@ -324,11 +334,11 @@ class Action:
         project_reward = 0
 
         if self.env.agent_ride != None: # 장비 탑승 상태일 때
-            return WorkTime
+            return -WorkTime
         elif self.env.agent_payload < WorkableWeight: # inventory에 material이 일정량 이상 있으면 작업 불가
-            return WorkTime
+            return -WorkTime
         elif 'project' not in self.field_data[y][x]: # project 위치가 아닐 때
-            return WorkTime
+            return -WorkTime
         else:
             task_list = self.env.project_dict[self.field_data[y][x]].task_list
 
@@ -352,9 +362,9 @@ class Action:
                             self.env.project_dict[self.field_data[y][x]].status = True
                             project_reward = 300
 
-                    return WorkTime + task_reward + project_reward
+                    return -WorkTime + task_reward + project_reward
         
-            return WorkTime + task_reward + project_reward
+            return -WorkTime + task_reward + project_reward
 
     def resource_check(self, resource_name):
         # 해당 resource에서 load할 수 있는 재료나 장비가 남아있는지 확인
