@@ -21,7 +21,7 @@ class SimpleConstructionEnv(gym.Env):
         
         # 관찰 공간 정의 수정
         self.observation_space = gym.spaces.MultiDiscrete([
-            3, 3,  # 에이전트 위치 (3x3 그리드)
+            5, 5,  # 에이전트 위치 (5x5 그리드)
             2, 2,  # 리소스1, 리소스2 보유 상태
             2,     # 현재 날짜 타입 (짝수/홀수)
             3, 3,  # 프로젝트1-태스크1 리소스1, 리소스2 상태
@@ -32,9 +32,9 @@ class SimpleConstructionEnv(gym.Env):
         
         # 위치 정보 설정
         self.agent_start_pos = [0, 0]
-        self.project_positions = [[2, 1], [2, 2]]  # 2개의 프로젝트 위치
-        self.resource1_pos = [1, 0]    # 리소스1 위치
-        self.resource2_pos = [1, 2]    # 리소스2 위치
+        self.project_positions = [[2, 0], [4, 4]]  # 2개의 프로젝트 위치
+        self.resource1_pos = [4, 1]    # 리소스1 위치
+        self.resource2_pos = [0, 4]    # 리소스2 위치
         
         # 일일 행동 제한 수정
         self.max_actions = 20
@@ -45,6 +45,8 @@ class SimpleConstructionEnv(gym.Env):
         # 프로젝트별 리소스 현황 추적
         self.project_resources = [0, 0]  # 각 프로젝트의 리소스 보유 현황
         
+        self.total_action_count = 0  # 총 액션 카운트 추가
+        self.max_total_actions = 150  # 최대 총 액션 수 제한 추가
         self.reset()
         
     def reset(self, seed=None, options=None):
@@ -52,6 +54,7 @@ class SimpleConstructionEnv(gym.Env):
         self.action_count = 0
         self.current_day = 0
         self.available_resources = [True, False]  # 첫날은 리소스1만 사용 가능
+        self.total_action_count = 0  # 총 액션 카운트 초기화
         
         self.state = np.array([
             self.agent_pos[0], self.agent_pos[1],  # 에이전트 위치
@@ -68,18 +71,28 @@ class SimpleConstructionEnv(gym.Env):
         reward = -1
         done = False
         
+        # 총 액션 카운트 제한 체크 추가
+        if self.total_action_count >= self.max_total_actions:
+            done = True
+            reward = -300  # 제한 초과로 인한 페널티
+            return self.state, reward, done, False, {}
+            
         # 액션 처리
         if action < 4:  # 이동
             self.action_count += 1
+            self.total_action_count += 1
             reward = self._move(action)
         elif action == 4:  # 리소스 픽업
             self.action_count += 5
+            self.total_action_count += 5
             reward = self._pickup_resource()
         elif action == 5:  # 리소스 드롭
             self.action_count += 5
+            self.total_action_count += 5
             reward = self._dropoff_resource()
         elif action == 6:  # 태스크 실행
             self.action_count += 10
+            self.total_action_count += 10
             reward = self._execute_task()
             
         # 일일 행동 제한 초과 시 다음날로 전환
@@ -105,7 +118,7 @@ class SimpleConstructionEnv(gym.Env):
             self.agent_pos[1] + moves[action][1]
         ]
         
-        if 0 <= new_pos[0] < 3 and 0 <= new_pos[1] < 3:
+        if 0 <= new_pos[0] < 5 and 0 <= new_pos[1] < 5:  # 5x5 그리드 경계 체크
             self.agent_pos = new_pos
             self.state[self.IDX_POS_X:self.IDX_POS_Y+1] = self.agent_pos
             return -1
@@ -231,20 +244,20 @@ class SimpleConstructionEnv(gym.Env):
         if current_project == 0:
             # 태스크1 실행 (리소스1만 필요)
             if self._execute_single_task(self.IDX_PROJECT_START, 1):
-                return 20
+                return 100
             # 태스크2 실행 (리소스1과 리소스2 필요)
             if self._execute_single_task(self.IDX_PROJECT_START + 2, 2):
-                return 20
+                return 100
                 
         # 프로젝트2 처리
         else:
             base_idx = self.IDX_PROJECT_START + 4
             # 태스크1 실행 (리소스1만 필요)
             if self._execute_single_task(base_idx, 1):
-                return 20
+                return 100
             # 태스크2 실행 (리소스1과 리소스2 필요)
             if self._execute_single_task(base_idx + 2, 2):
-                return 20
+                return 100
                 
         return -5
 
