@@ -1,10 +1,6 @@
 from stable_baselines3 import DQN
 from Simple_DQN_Agent import SimpleConstructionEnv
 
-def action_sequence(step):
-    sequence = [1, 2, 4, 2, 5, 6, 0, 4, 2, 1, 5, 6]
-    return sequence[step]
-
 def evaluate_agent(model, env, num_episodes=1):
     for episode in range(num_episodes):
         obs, _ = env.reset()
@@ -15,8 +11,8 @@ def evaluate_agent(model, env, num_episodes=1):
         print(f"\n에피소드 {episode + 1} 시작")
         
         while not done:
-            if step >= 25:
-                print("\n최대 스텝 수(20)에 도달하여 에피소드를 종료합니다.")
+            if step >= 35:
+                print("\n최대 스텝 수(35)에 도달하여 에피소드를 종료합니다.")
                 break
                 
             action, _ = model.predict(obs, deterministic=True)
@@ -37,10 +33,18 @@ def evaluate_agent(model, env, num_episodes=1):
             }
             print("\n프로젝트 상태:")
             print(f"프로젝트 1:")
-            print(f"- 리소스1: {status[obs[4]]}")
+            print(f"- 태스크 1 (리소스1 필요):")
+            print(f"  - 리소스1: {status[obs[4]]}")
+            print(f"- 태스크 2 (리소스1, 리소스2 필요):")
+            print(f"  - 리소스1: {status[obs[6]]}")
+            print(f"  - 리소스2: {status[obs[7]]}")
+            
             print(f"프로젝트 2:")
-            print(f"- 리소스1: {status[obs[5]]}")
-            print(f"- 리소스2: {status[obs[7]]}")
+            print(f"- 태스크 1 (리소스1, 리소스2 필요):")
+            print(f"  - 리소스1: {status[obs[8]]}")
+            print(f"  - 리소스2: {status[obs[9]]}")
+            print(f"- 태스크 2 (리소스1 필요):")
+            print(f"  - 리소스1: {status[obs[10]]}")
             
             # 행동 설명
             action_desc = {
@@ -48,8 +52,8 @@ def evaluate_agent(model, env, num_episodes=1):
                 1: "오른쪽으로 이동",
                 2: "아래로 이동",
                 3: "왼쪽으로 이동",
-                4: "리소스 픽업",
-                5: "리소스 드롭",
+                4: "리소스1 픽업/드롭",
+                5: "리소스2 픽업/드롭",
                 6: "태스크 실행"
             }
             print(f"선택한 행동: {action_desc[action]}")

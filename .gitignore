@@ -1,6 +1,7 @@
 *.zip
 DQN/log/
 crm_rl_iot/log/
+crm_rl_iot/DQN/log/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

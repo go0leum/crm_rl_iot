@@ -1,73 +1,79 @@
 import numpy as np
 from Simple_DQN_Agent import SimpleConstructionEnv
 
-def test_state_transition():
+def test_project_completion():
     env = SimpleConstructionEnv()
-    
-    # 테스트 케이스 1: 초기 상태에서 오른쪽으로 이동
-    initial_state = env.reset()[0]
-    action = 1  # 오른쪽 이동
-    next_state, reward, done, _, _ = env.step(action)
-    print("테스트 1 - 오른쪽 이동")
-    print(f"초기 상태: {initial_state}")
-    print(f"다음 상태: {next_state}")
-    print(f"리워드: {reward}\n")
-    
-    # 테스트 케이스 2: 리소스 위치에서 픽업
     env.reset()
-    # 리소스 위치(1,1)로 이동
-    env.step(2)  # 아래로
-    env.step(1)  # 오른쪽으로
-    state_before_pickup = env.state.copy()
-    action = 4  # 리소스 픽업
-    next_state, reward, done, _, _ = env.step(action)
-    print("테스트 2 - 리소스 픽업")
-    print(f"픽업 전 상태: {state_before_pickup}")
-    print(f"픽업 후 상태: {next_state}")
-    print(f"리워드: {reward}\n")
     
-    # 테스트 케이스 3: 프로젝트 위치에서 리소스 드롭
-    env.reset()
-    env.state[env.IDX_RESOURCE] = 1  # 리소스 보유 상태로 설정
-    env.agent_pos = [2, 2]  # 첫 번째 프로젝트 위치로 이동
+    print("=== 프로젝트 완료 시나리오 테스트 ===")
+    
+    # 프로젝트 1의 태스크1 완료 상태로 설정
+    env.state[env.IDX_PROJECT_START] = 2  # 태스크1 완료
+    
+    # 프로젝트 1의 태스크2 완료 상태로 설정
+    env.state[env.IDX_PROJECT_START + 2] = 2  # 태스크2 리소스1 완료
+    env.state[env.IDX_PROJECT_START + 3] = 2  # 태스크2 리소스2 완료
+    
+    # 프로젝트 2의 리소스 준비 상태로 설정
+    base_idx = env.IDX_PROJECT_START + 4
+    env.state[base_idx] = 1     # 리소스1 준비됨
+    env.state[base_idx + 1] = 1 # 리소스2 준비됨
+    
+    # 에이전트를 프로젝트 2의 위치로 이동
+    env.agent_pos = env.project_positions[1]  # 프로젝트 2 위치
     env.state[env.IDX_POS_X:env.IDX_POS_Y+1] = env.agent_pos
-    state_before_drop = env.state.copy()
-    action = 5  # 리소스 드롭
-    next_state, reward, done, _, _ = env.step(action)
-    print("테스트 3 - 리소스 드롭")
-    print(f"드롭 전 상태: {state_before_drop}")
-    print(f"드롭 후 상태: {next_state}")
-    print(f"리워드: {reward}\n")
     
-    # 테스트 케이스 4: 프로젝트 실행
-    env.reset()
-    env.agent_pos = [2, 2]  # 첫 번째 프로젝트 위치
-    env.state[env.IDX_POS_X:env.IDX_POS_Y+1] = env.agent_pos
-    env.state[env.IDX_PROJECT_START+1] = 1  # 프로젝트 준비 상태로 설정
-    state_before_execute = env.state.copy()
-    action = 6  # 태스크 실행
+    print("초기 상태:")
+    print(f"에이전트 위치: {env.agent_pos}")
+    print(f"프로젝트1 상태: 태스크1={env.state[env.IDX_PROJECT_START]}, 태스크2={env.state[env.IDX_PROJECT_START+2:env.IDX_PROJECT_START+4]}")
+    print(f"프로젝트2 상태: {env.state[base_idx:base_idx+2]}")
+    
+    # 프로젝트 2 실행
+    action = 6  # 태스크 실행 액션
     next_state, reward, done, _, _ = env.step(action)
-    print("테스트 4 - 프로젝트 실행")
-    print(f"실행 전 상태: {state_before_execute}")
-    print(f"실행 후 상태: {next_state}")
+    
+    print("\n태스크 실행 후:")
     print(f"리워드: {reward}")
+    print(f"완료 여부: {done}")
+    print(f"프로젝트2 상태: {next_state[base_idx:base_idx+2]}")
     
-    # 테스트 케이스 5: 두 프로젝트 완료 시나리오
+    # 모든 프로젝트가 완료되었는지 확인
+    all_complete = env._all_projects_complete()
+    print(f"\n모든 프로젝트 완료 여부: {all_complete}")
+
+def test_resource_drop():
+    env = SimpleConstructionEnv()
     env.reset()
-    # 첫 번째 프로젝트 완료 상태로 설정
-    env.state[env.IDX_PROJECT_START] = 2  # 첫 번째 프로젝트 완료
-    env.agent_pos = [2, 2]  # 두 번째 프로젝트 위치
-    env.state[env.IDX_POS_X:env.IDX_POS_Y+1] = env.agent_pos
-    env.state[env.IDX_PROJECT_START+1] = 1  # 두 번째 프로젝트 준비 상태
     
-    state_before_complete = env.state.copy()
-    action = 6  # 두 번째 프로젝트 실행
+    print("=== 리소스 드롭 시나리오 테스트 ===")
+    
+    # 에이전트가 리소스1을 보유한 상태로 설정
+    env.state[env.IDX_RESOURCE_1] = 1  # 리소스1 보유 상태
+    
+    # 프로젝트 2의 초기 상태 설정
+    base_idx = env.IDX_PROJECT_START + 4
+    env.state[base_idx] = 0     # 리소스1 준비 안됨
+    env.state[base_idx + 1] = 0 # 리소스2 준비 안됨
+    
+    # 에이전트를 프로젝트 2의 위치로 이동
+    env.agent_pos = env.project_positions[1]  # 프로젝트 2 위치
+    env.state[env.IDX_POS_X:env.IDX_POS_Y+1] = env.agent_pos
+    
+    print("초기 상태:")
+    print(f"에이전트 위치: {env.agent_pos}")
+    print(f"에이전트 리소스 보유: {env.state[env.IDX_RESOURCE_1]}")
+    print(f"프로젝트2 상태: {env.state[base_idx:base_idx+2]}")
+    
+    # 리소스1 드롭 액션 실행
+    action = 5  # 리소스1 드롭 액션
     next_state, reward, done, _, _ = env.step(action)
-    print("\n테스트 5 - 두 프로젝트 완료")
-    print(f"완료 전 상태: {state_before_complete}")
-    print(f"완료 후 상태: {next_state}")
+    
+    print("\n리소스1 드롭 후:")
     print(f"리워드: {reward}")
-    print(f"에피소드 종료: {done}")
+    print(f"완료 여부: {done}")
+    print(f"에이전트 리소스 보유: {next_state[env.IDX_RESOURCE_1]}")
+    print(f"프로젝트2 상태: {next_state[base_idx:base_idx+2]}")
 
 if __name__ == "__main__":
-    test_state_transition() 
+    test_project_completion()
+    test_resource_drop()
