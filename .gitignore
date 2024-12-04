@@ -1,4 +1,5 @@
-
+data_gj/
+weights/
 DQN/log/
 crm_rl_iot/log/
 crm_rl_iot/DQN/log/
