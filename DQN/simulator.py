@@ -56,7 +56,7 @@ class GraphicDisplay(tk.Tk):
 
         # 캔버스에 이미지 추가
         # start, agent
-        start_y, start_x = self.start_pos[0][0], self.start_pos[0][1]
+        start_y, start_x = self.start_pos[0], self.start_pos[1]
         canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.boxes[0])
         self.agent_icon = canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.icons[0])
         # resource
