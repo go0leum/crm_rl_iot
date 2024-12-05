@@ -23,7 +23,10 @@ class GraphicDisplay(tk.Tk):
         self.title('crm rl iot')
         self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 100))
 
-        self.field_data, self.box_data = self.env.get_field_data() #start, resource, obstacle, project
+        self.start_pos = self.env.agent_start_pos
+        self.project_pos = self.env.project_positions
+        self.resource_pos = [self.env.resource1_pos, self.env.resource2_pos]
+
         self.icons, self.boxes = self.load_images() #icon:agent,equipment, box:start, resource, obstacle, on_project, off_project
         self.canvas = self._build_canvas()
 
@@ -53,33 +56,19 @@ class GraphicDisplay(tk.Tk):
 
         # 캔버스에 이미지 추가
         # start, agent
-        start_y, start_x = self.box_data[0][0], self.box_data[0][1]
+        start_y, start_x = self.start_pos[0][0], self.start_pos[0][1]
         canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.boxes[0])
         self.agent_icon = canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.icons[0])
         # resource
-        resource_dict = self.box_data[1]
-        for key in resource_dict:
-            for location in resource_dict[key].locations:
-                canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[1])
-        # obstacle
-        obstacle_dict = self.box_data[2]
-        for key in obstacle_dict:
-            for location in obstacle_dict[key].locations:
-                canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[2])
+        for resource_pos in self.resource_pos:
+            location = resource_pos
+            self.resource_icon = canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[1])
         # project
-        project_dict = self.box_data[3]
-        self.project_box_dict = dict()
-        for key in project_dict:
-            for location in project_dict[key].locations:
-                self.project_box_dict[key] = canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[3])
+        for project_pos in self.project_pos:
+            location = project_pos
+            self.project_icon = canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[3])
         
         canvas.pack()
-
-        # work day 확인 창
-        self.current_day = tk.StringVar()
-        self.current_day.set('current day: '+ str(self.env.current_day))
-        current_day_label = Label(self, textvariable=self.current_day)
-        current_day_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 40)
 
         # 버튼 초기화
         dqn_button = Button(self, text="simulator start",
