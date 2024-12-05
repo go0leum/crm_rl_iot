@@ -4,6 +4,7 @@ import time
 import numpy as np
 from PIL import ImageTk, Image
 from stable_baselines3 import DQN
+from Simple_DQN_Agent import SimpleConstructionEnv
 
 PhotoImage = ImageTk.PhotoImage
 UNIT = 50
@@ -149,5 +150,6 @@ class GraphicDisplay(tk.Tk):
             self.render()
 
 if __name__ == "__main__":
-    grid_world = GraphicDisplay()
+    env = SimpleConstructionEnv()
+    grid_world = GraphicDisplay(env)
     grid_world.mainloop()
