@@ -82,7 +82,6 @@ class GraphicDisplay(tk.Tk):
     def render(self):
         time.sleep(0.1)
         self.canvas.tag_raise(self.agent_icon)
-        self.current_day.set('current day: '+ str(self.env.work_day))
         self.update()
 
     def model_load(self, model_path):
