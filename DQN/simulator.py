@@ -13,14 +13,12 @@ class GraphicDisplay(tk.Tk):
     def __init__(self, env):
         super(GraphicDisplay, self).__init__()
         self.env = env
-        self.field_width = self.env.field_width
-        self.field_height = self.env.field_height
+        self.field_width = 5
+        self.field_height = 5
 
         # 상태 인덱스 상수
         self.IDX_POS_X = self.env.IDX_POS_X
         self.IDX_POS_Y = self.env.IDX_POS_Y
-        self.IDX_PROJECT_START = self.env.IDX_PROJECT_START
-        self.IDX_PROJECT_END = self.env.IDX_PROJECT_END
 
         self.title('crm rl iot')
         self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 100))
@@ -135,16 +133,6 @@ class GraphicDisplay(tk.Tk):
 
             # agent icon move
             self.canvas.move(self.agent_icon, (obs_prime[self.IDX_POS_X]-obs[self.IDX_POS_X])* UNIT, (obs_prime[self.IDX_POS_Y]-obs[self.IDX_POS_Y])* UNIT)
-            
-            # project icon off
-            if agent_position in self.env.project_positions :
-                project_idx = self.env.project_positions.index(agent_position)
-                base_index = self.IDX_PROJECT_START+(4*(project_idx-1))
-                proj_task1_complete = self.state[base_index] == 2
-                proj_task2_complete = (self.state[base_index + 2] == 2 and self.state[base_index + 3] == 2)
-                
-                if (proj_task1_complete and proj_task2_complete):
-                    #self.canvas.itemconfig(self.project_box_dict[field_name], image=self.boxes[4])
         
             obs = obs_prime
             self.render()
