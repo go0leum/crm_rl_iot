@@ -104,8 +104,11 @@ class GraphicDisplay(tk.Tk):
         
     def simulation(self):
         # 모델 load 하기
-        model_path = '../weights/simple_construction_dqn'
-        model = self.model_load(model_path)
+        try:
+            model_path = '../weights/simple_construction_dqn'
+            model = self.model_load(model_path)
+        except FileNotFoundError:
+            print(f'There is not model file. path: {model_path}.')
 
         done = False
         # env의 observation space 가져오기
