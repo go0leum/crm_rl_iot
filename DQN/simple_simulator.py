@@ -84,7 +84,7 @@ class GraphicDisplay(tk.Tk):
         project_label = []
         for i in range(len(self.project_positions)):
             self.project_string.append(tk.StringVar())
-            self.project_string[i].set(f'Project {i}: {self.project_status[(i*2)+0]}, {self.project_status[(i*2)+1]}')
+            self.project_string[i].set(f'Project {i}: {self.project_status[(i*4)+0]}, {self.project_status[(i*4)+2]}, {self.project_status[(i*4)+3]}')
             project_label.append(Label(self, textvariable=self.project_string[i]))
             project_label[i].place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 45+(i*20))
 
@@ -104,7 +104,7 @@ class GraphicDisplay(tk.Tk):
         self.reward_string.set('Reward: '+ str(self.total_reward))
         self.reward_string.set('Reward: '+ str(self.total_reward))
         for i in range(len(self.project_string)):
-            self.project_string[i].set(f'Project {i}: {self.project_status[(i*2)+0]}, {self.project_status[(i*2)+1]}')
+            self.project_string[i].set(f'Project {i}: {self.project_status[(i*4)+0]}, {self.project_status[(i*4)+2]}, {self.project_status[(i*4)+3]}')
         self.update()
 
     def model_load(self, model_path):
