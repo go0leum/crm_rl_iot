@@ -16,6 +16,8 @@ class GraphicDisplay(tk.Tk):
         self.field_width = 5
         self.field_height = 5
 
+        self.total_reward = 0
+
         # 상태 인덱스 상수
         self.IDX_POS_X = self.env.IDX_POS_X
         self.IDX_POS_Y = self.env.IDX_POS_Y
@@ -24,8 +26,10 @@ class GraphicDisplay(tk.Tk):
         self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 100))
 
         self.start_pos = self.env.agent_start_pos
-        self.project_pos = self.env.project_positions
-        self.resource_pos = [self.env.resource1_pos, self.env.resource2_pos]
+        self.project_positions = self.env.project_positions
+        self.resource_positions = [self.env.resource1_pos, self.env.resource2_pos]
+
+        self.project_status = self.project_state_check()
 
         self.icons, self.boxes = self.load_images() #icon:agent,equipment, box:start, resource, obstacle, on_project, off_project
         self.canvas = self._build_canvas()
@@ -56,19 +60,34 @@ class GraphicDisplay(tk.Tk):
 
         # 캔버스에 이미지 추가
         # start, agent
-        start_y, start_x = self.start_pos[0], self.start_pos[1]
+        start_x, start_y = self.start_pos[0], self.start_pos[1]
         canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.boxes[0])
         self.agent_icon = canvas.create_image(start_x* UNIT+ (UNIT/2), start_y* UNIT+ (UNIT/2), image=self.icons[0])
         # resource
-        for resource_pos in self.resource_pos:
+        for resource_pos in self.resource_positions:
             location = resource_pos
-            self.resource_icon = canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[1])
+            self.resource_icon = canvas.create_image(location[0]* UNIT+ (UNIT/2), location[1]* UNIT+ (UNIT/2), image=self.boxes[1])
         # project
-        for project_pos in self.project_pos:
+        for project_pos in self.project_positions:
             location = project_pos
-            self.project_icon = canvas.create_image(location[1]* UNIT+ (UNIT/2), location[0]* UNIT+ (UNIT/2), image=self.boxes[3])
+            self.project_icon = canvas.create_image(location[0]* UNIT+ (UNIT/2), location[1]* UNIT+ (UNIT/2), image=self.boxes[3])
         
         canvas.pack()
+        # project task 상태, reward 확인창
+        self.reward_string = tk.StringVar()
+        self.reward_string.set('Reward: '+ str(self.total_reward))
+        reward_label = Label(self, textvariable=self.reward_string)
+        reward_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 25)
+        
+        self.project_status = self.project_state_check()
+        self.project_string = []
+        project_label = []
+        for i in range(len(self.project_positions)):
+            self.project_string.append(tk.StringVar())
+            self.project_string[i].set(f'Project {i}: {self.project_status[(i*2)+0]}, {self.project_status[(i*2)+1]}')
+            project_label.append(Label(self, textvariable=self.project_string[i]))
+            project_label[i].place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 45+(i*20))
+
 
         # 버튼 초기화
         dqn_button = Button(self, text="simulator start",
@@ -82,6 +101,10 @@ class GraphicDisplay(tk.Tk):
     def render(self):
         time.sleep(0.1)
         self.canvas.tag_raise(self.agent_icon)
+        self.reward_string.set('Reward: '+ str(self.total_reward))
+        self.reward_string.set('Reward: '+ str(self.total_reward))
+        for i in range(len(self.project_string)):
+            self.project_string[i].set(f'Project {i}: {self.project_status[(i*2)+0]}, {self.project_status[(i*2)+1]}')
         self.update()
 
     def model_load(self, model_path):
@@ -89,7 +112,6 @@ class GraphicDisplay(tk.Tk):
             model = DQN.load(
                 model_path,
                 env=self.env,
-                tensorboard_log="./crm_rl_iot/DQN/log/dqn_tensorboard/",
                 # 필요한 경우 하이퍼파라미터 수정
                 learning_rate=1e-4,
                 exploration_fraction=0.2,
@@ -101,31 +123,43 @@ class GraphicDisplay(tk.Tk):
         except Exception as e:
             print(f"모델 로딩 중 오류 발생: {e}")
             return None
+    
+    def project_state_check(self):
+        project_state = []
+        state = False
+        for status in self.env.state[self.env.IDX_PROJECT_START:]: # 0: resource없음, 1:resource 있음, 2: task 완료:
+            if status == 0:
+                state = 'False'
+            elif status == 1:
+                state = 'Ready'
+            elif status == 2:
+                state = 'Done'
+            project_state.append(state)
+
+        return project_state
         
     def simulation(self):
         # 모델 load 하기
-        try:
-            model_path = '../weights/simple_construction_dqn'
-            model = self.model_load(model_path)
-        except FileNotFoundError:
-            print(f'There is not model file. path: {model_path}.')
+        model_path = './weights/simple_construction_dqn'
+        model = self.model_load(model_path)
 
         done = False
         # env의 observation space 가져오기
         obs, _ = self.env.reset()
         while not done:
             # agent의 action 가져오기
+            agent_position_before = [obs[self.IDX_POS_X], obs[self.IDX_POS_Y]]
             action, _ = model.predict(obs, deterministic=True)
             action = int(action)
 
             # env의 step을 통해 다음 상태 가져오기
-            obs_prime, reward, done, _, _ = self.env.step(action)
-            agent_position = [obs[self.IDX_POS_X], obs[self.IDX_POS_Y]]
+            obs, reward, done, _, _ = self.env.step(action)
+            agent_position_after = [obs[self.IDX_POS_X], obs[self.IDX_POS_Y]]
+            self.total_reward += reward
 
             # agent icon move
-            self.canvas.move(self.agent_icon, (obs_prime[self.IDX_POS_X]-obs[self.IDX_POS_X])* UNIT, (obs_prime[self.IDX_POS_Y]-obs[self.IDX_POS_Y])* UNIT)
-        
-            obs = obs_prime
+            self.canvas.move(self.agent_icon, (agent_position_after[0]-agent_position_before[0])* UNIT, (agent_position_after[1]-agent_position_before[1])* UNIT)
+            self.project_status = self.project_state_check()
             self.render()
 
 if __name__ == "__main__":

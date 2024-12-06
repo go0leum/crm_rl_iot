@@ -25,7 +25,7 @@ def new_training(env, total_steps=120000):
     )
     
     model.learn(total_timesteps=total_steps)
-    model.save("simple_construction_dqn")
+    model.save("../weights/simple_construction_dqn")
     print("학습 완료. 모델 저장됨: simple_construction_dqn")
     
     return model

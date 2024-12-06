@@ -1,0 +1,47 @@
+{   
+    "meta_data": {
+        "name": "simple construction data",
+        "field_width": 5,
+        "field_height": 5,
+        "start_location": [0,0],
+        "project_list": ["project_1", "project_2"],
+        "task_list": ["task_1", "task_2"],
+        "resource_list": ["material_1", "material_2"],
+        "obstacle_list": []
+    },
+    "projects":[
+        {"name": "project_1",
+        "location":[2, 0],
+        "task":[
+            {"name":"task_1",
+            "ETA":300,
+            "resource":["material_1"]},
+            {"name":"task_2",
+            "ETA":100,
+            "resource":["material_1", "material_2"]}]
+        },
+        {"name": "project_2",
+        "location":[4, 4],
+        "task":[
+            {"name":"task_1",
+            "ETA":300,
+            "resource":["material_1"]},
+            {"name":"task_2",
+            "ETA":100,
+            "resource":["material_1", "material_2"]}]
+        }
+    ],
+    "resources":[
+        {"name": "material_1",
+        "location": [4,1],
+        "weight": 10
+        },
+        {"name": "material_1",
+        "location": [0,4],
+        "weight": 5
+        }
+    ],
+    "obstacles":[
+
+    ]
+}
