@@ -7,6 +7,7 @@ crm_rl_iot/DQN/log/
 __pycache__/
 *.py[cod]
 *$py.class
+.vscode/
 
 # C extensions
 *.so
