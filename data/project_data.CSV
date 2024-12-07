@@ -1,2 +1,10 @@
-project_1,cvil_task,
-project_2,cvil_task,
+project_1,cvil_task,,
+project_2,cvil_task,electrical_task,
+project_3,cvil_task,mechanical_task,electrical_task
+project_4,cvil_task,mechanical_task,electrical_task
+project_5,cvil_task,mechanical_task,electrical_task
+project_6,cvil_task,mechanical_task,electrical_task
+project_7,cvil_task,mechanical_task,electrical_task
+project_8,cvil_task,mechanical_task,electrical_task
+project_9,cvil_task,mechanical_task,electrical_task
+project_10,cvil_task,mechanical_task,electrical_task
