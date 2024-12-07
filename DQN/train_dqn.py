@@ -1,8 +1,9 @@
 from stable_baselines3 import DQN
 from Simple_DQN_Agent import SimpleConstructionEnv
+from Complex_DQN_Agent import ComplexConstructionEnv
 import os
 
-def new_training(env, total_steps=120000):
+def new_training(env, total_steps=120000, model_type="simple_construction_dqn"):
     """새로운 모델 학습을 수행하는 함수"""
     print("=== 새로운 모델 학습 시작 ===")
     
@@ -21,12 +22,12 @@ def new_training(env, total_steps=120000):
         exploration_final_eps=0.1,
         target_update_interval=1000,
         verbose=1,
-        tensorboard_log="./crm_rl_iot/DQN/log/dqn_tensorboard/"
+        tensorboard_log=f"DQN/log/dqn_tensorboard/{model_type}/"
     )
     
     model.learn(total_timesteps=total_steps)
-    model.save("../weights/simple_construction_dqn")
-    print("학습 완료. 모델 저장됨: simple_construction_dqn")
+    model.save(f"weights/{model_type}")
+    print(f"학습 완료. 모델 저장됨: {model_type}")
     
     return model
 
@@ -42,7 +43,7 @@ def continue_training(env, model_path="simple_construction_dqn", additional_step
         model = DQN.load(
             model_path,
             env=env,
-            tensorboard_log="./crm_rl_iot/DQN/log/dqn_tensorboard/",
+            tensorboard_log="DQN/log/dqn_tensorboard/"+model_path+"/",
             # 필요한 경우 하이퍼파라미터 수정
             learning_rate=1e-4,
             exploration_fraction=0.2,
@@ -67,36 +68,62 @@ def continue_training(env, model_path="simple_construction_dqn", additional_step
         return None
 
 def main():
-    env = SimpleConstructionEnv()
-    
+
     while True:
         print("\n=== DQN 학습 메뉴 ===")
-        print("1. 새로운 모델 학습")
-        print("2. 기존 모델 추가 학습")
+        print("1. simple environment")
+        print("2. complex environment")
         print("3. 종료")
-        
         choice = input("선택하세요 (1-3): ")
-        
+
+        env = None
+
         if choice == "1":
-            steps = input("학습 스텝 수를 입력하세요 (기본값: 120000): ")
-            steps = int(steps) if steps.isdigit() else 120000
-            new_training(env, steps)
-            
+            env = SimpleConstructionEnv()
+            model_type = "simple_construction_dqn"
+
         elif choice == "2":
-            model_path = input("불러올 모델 경로를 입력하세요 (기본값: simple_construction_dqn): ")
-            model_path = model_path if model_path else "simple_construction_dqn"
-            
-            steps = input("추가 학습 스텝 수를 입력하세요 (기본값: 50000): ")
-            steps = int(steps) if steps.isdigit() else 50000
-            
-            continue_training(env, model_path, steps)
-            
+            env = ComplexConstructionEnv() 
+            model_type = "complex_construction_dqn"
+        
         elif choice == "3":
-            print("프로그램을 종료합니다.")
             break
-            
+        
         else:
             print("잘못된 선택입니다. 다시 선택해주세요.")
+        
+        if env is not None:
+
+            while True:
+                print("\n=== DQN 학습 메뉴 ===")
+                print("1. 새로운 모델 학습")
+                print("2. 기존 모델 추가 학습")
+                print("3. 종료")
+                
+                choice = input("선택하세요 (1-3): ")
+                
+                if choice == "1":
+                    steps = input("학습 스텝 수를 입력하세요 (기본값: 120000): ")
+                    steps = int(steps) if steps.isdigit() else 120000
+                    new_training(env, steps, model_type)
+                    break
+                    
+                elif choice == "2":
+                    model_path = input("불러올 모델 경로를 입력하세요 (기본값: simple_construction_dqn): ")
+                    model_path = model_path if model_path else "simple_construction_dqn"
+                    
+                    steps = input("추가 학습 스텝 수를 입력하세요 (기본값: 50000): ")
+                    steps = int(steps) if steps.isdigit() else 50000
+                    
+                    continue_training(env, model_path, steps)
+                    break
+                    
+                elif choice == "3":
+                    print("프로그램을 종료합니다.")
+                    break
+                    
+                else:
+                    print("잘못된 선택입니다. 다시 선택해주세요.")
 
 if __name__ == "__main__":
     main() 
