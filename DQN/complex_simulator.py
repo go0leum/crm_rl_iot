@@ -4,7 +4,7 @@ import time
 import numpy as np
 from PIL import ImageTk, Image
 from stable_baselines3 import DQN
-from Simple_DQN_Agent import SimpleConstructionEnv
+from Complex_DQN_Agent import ComplexConstructionEnv
 
 PhotoImage = ImageTk.PhotoImage
 UNIT = 50
@@ -13,8 +13,8 @@ class GraphicDisplay(tk.Tk):
     def __init__(self, env):
         super(GraphicDisplay, self).__init__()
         self.env = env
-        self.field_width = 5
-        self.field_height = 5
+        self.field_width = self.env.field_width
+        self.field_height = self.env.field_width
 
         self.total_reward = 0
 
@@ -23,11 +23,12 @@ class GraphicDisplay(tk.Tk):
         self.IDX_POS_Y = self.env.IDX_POS_Y
 
         self.title('crm rl iot')
-        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 200))
+        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 100))
 
         self.start_pos = self.env.agent_start_pos
         self.project_positions = self.env.project_positions
-        self.resource_positions = [self.env.resource1_pos, self.env.resource2_pos]
+        self.resource_positions = self.env.resource_positions
+        self.obstacle_positions = self.env.obstacle_positions
 
         self.project_status = self.project_state_check()
 
@@ -71,11 +72,15 @@ class GraphicDisplay(tk.Tk):
         for project_pos in self.project_positions:
             location = project_pos
             self.project_icon = canvas.create_image(location[0]* UNIT+ (UNIT/2), location[1]* UNIT+ (UNIT/2), image=self.boxes[3])
-        
+        # obstacle
+        for obstacle_pos in self.obstacle_positions:
+            location = obstacle_pos
+            self.obstacle_icon = canvas.create_image(location[0]* UNIT+ (UNIT/2), location[1]* UNIT+ (UNIT/2), image=self.boxes[2])
+
         canvas.pack()
         # project task 상태, reward 확인창, workday 확인창
         self.workday_string = tk.StringVar()
-        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
+        self.workday_string.set(f'Remaining Work Day: {self.env.max_total_action//self.env.action_count}={self.env.max_total_action}/{self.env.action_count}')
         workday_label = Label(self, textvariable=self.workday_string)
         workday_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 25)
 
@@ -89,9 +94,14 @@ class GraphicDisplay(tk.Tk):
         project_label = []
         for i in range(len(self.project_positions)):
             self.project_string.append(tk.StringVar())
-            self.project_string[i].set(f"Project {i}: \n Task 1: resource1-{self.project_status[(i*4)+0]},  \n Task2: resource1-{self.project_status[(i*4)+2]}, resource2-{self.project_status[(i*4)+3]}")
+            idx_start = self.env.IDX_PROJECT_START[i] - self.env.IDX_PROJECT_START[0]
+            if i < len(self.project_positions)-1:
+                idx_end = self.env.IDX_PROJECT_START[i+1] - self.env.IDX_PROJECT_START[i]
+            else:
+                idx_end = len(self.project_status)
+            self.project_string[i].set(f'Project {i}: {self.project_status[idx_start:idx_end]}')
             project_label.append(Label(self, textvariable=self.project_string[i]))
-            project_label[i].place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 65+(i*60))
+            project_label[i].place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 65+(i*20))
 
 
         # 버튼 초기화
@@ -106,9 +116,16 @@ class GraphicDisplay(tk.Tk):
     def render(self):
         time.sleep(0.1)
         self.canvas.tag_raise(self.agent_icon)
-        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
+        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.action_count}={self.env.max_total_action}/{self.env.action_count}')
+        self.reward_string.set(f'Reward: {self.total_reward}')
         for i in range(len(self.project_string)):
-            self.project_string[i].set(f"Project {i}: \n Task 1: resource1-{self.project_status[(i*4)+0]},  \n Task2: resource1-{self.project_status[(i*4)+2]}, resource2-{self.project_status[(i*4)+3]}")
+            idx_start = self.env.IDX_PROJECT_START[i] - self.env.IDX_PROJECT_START[0]
+            if i < len(self.project_positions)-1:
+                idx_end = self.env.IDX_PROJECT_START[i+1] - self.env.IDX_PROJECT_START[i]
+            else:
+                idx_end = len(self.project_status)
+            self.project_string[i].set(f'Project {i}: {self.project_status[idx_start:idx_end]}')
+        self.update()
 
     def model_load(self, model_path):
         try:
@@ -130,7 +147,7 @@ class GraphicDisplay(tk.Tk):
     def project_state_check(self):
         project_state = []
         state = False
-        for status in self.env.state[self.env.IDX_PROJECT_START:]: # 0: resource없음, 1:resource 있음, 2: task 완료:
+        for status in self.env.state[self.env.IDX_PROJECT_START[0]:]: # 0: resource없음, 1:resource 있음, 2: task 완료:
             if status == 0:
                 state = 'False'
             elif status == 1:
@@ -143,7 +160,7 @@ class GraphicDisplay(tk.Tk):
         
     def simulation(self):
         # 모델 load 하기
-        model_path = './weights/simple_construction_dqn'
+        model_path = './weights/complex_construction_dqn'
         model = self.model_load(model_path)
 
         done = False
@@ -166,6 +183,6 @@ class GraphicDisplay(tk.Tk):
             self.render()
 
 if __name__ == "__main__":
-    env = SimpleConstructionEnv()
+    env = ComplexConstructionEnv()
     grid_world = GraphicDisplay(env)
     grid_world.mainloop()
