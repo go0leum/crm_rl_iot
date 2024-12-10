@@ -104,7 +104,7 @@ class GraphicDisplay(tk.Tk):
         return canvas
     
     def render(self):
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.canvas.tag_raise(self.agent_icon)
         self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
         for i in range(len(self.project_string)):
