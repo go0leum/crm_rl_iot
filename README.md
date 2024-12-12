@@ -73,11 +73,9 @@ The agent receives positive rewards for actions that progress the tasks and nega
 | Performing a move action         | -5     |
 | Unsuccessful resource pickup/drop | -5     |
 
-## Training & Test
+## Observation space
 
 ### Q-Learning
-
-#### observation space
 
 | Name           | Size   | Definition                                   |
 | -------------- | ------ | -------------------------------------------- |
