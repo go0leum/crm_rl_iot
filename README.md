@@ -14,9 +14,40 @@ In this project, we aim to define tasks that may arise in construction site proj
 
 **Optimization**: Conducting reinforcement learning to minimize the time required to complete given projects with limited resources.
 
+## Training
+
+### Q-Learning
+
+```
+python Q-Learning/simulator.py
+```
+
+### DQN
+
+```
+python DQN/train_dqn.py
+```
+
+## Simulator
+
+### DQN
+- simple observation space
+```
+python DQN/complex_simulator.py
+```
+
+- complex observation space
+```
+python DQN/complex_simulator.py
+```
+
 ## MDP Definition
 
 ### Environment
+
+#### Setting
+
+You can change the environment complexity by edit data/construction_data.json.
 
 #### Time
 - The total working time and daily working time are given.
@@ -93,3 +124,10 @@ The agent receives positive rewards for actions that progress the tasks and nega
 | Project-Task-Resource status | (3 x 3) ^ 4 | Indicates the status of each task resource in the project. The resources can have statuses of 0: Not Ready, 1: Ready, 2: Completed. Since there are 2 types of resources, a (3 x 3) state space is needed. This must be recorded for each task in each project, with 2 projects and 2 tasks each, requiring a total of 4 pairs. For example, if the statuses are as follows: \n[0, 1]: (Resource 2 of Project 1, Task 1 is ready) \n[1, 1]: (Both resources of Project 1, Task 2 are ready) \n[2, 2]: (Project 2, Task 1 is completed) \n[0, 0]: (Resources of Project 2, Task 2 are not ready) |
 
 #### Complex DQN
+
+| Name                      | Size        | Definition                                                                                                           |
+|---------------------------|-------------|----------------------------------------------------------------------------------------------------------------------|
+| Agent Position            | 5 x 5       | Indicates the coordinates where the agent is currently located.                                                      |
+| Agent Resource            | 2 x 2       | Indicates the resources the agent possesses. Since there are 2 types of resources, each resource's possession status must be indicated. For example, [0, 1] means the agent has only the second resource. |
+| Resource state            | 2 x2        | The information reflects the resources available for pickup at the current time. Since resources are randomly allocated by date, it shows the resources available for transportation on the current date. For example, [0,1] indicates that only the second resource is available for transportation.|
+| Project-Task-Resource status | (3 x 3) ^ 4 | Indicates the status of each task resource in the project. The resources can have statuses of 0: Not Ready, 1: Ready, 2: Completed. Since there are 2 types of resources, a (3 x 3) state space is needed. This must be recorded for each task in each project, with 2 projects and 2 tasks each, requiring a total of 4 pairs. For example, if the statuses are as follows: \n[0, 1]: (Resource 2 of Project 1, Task 1 is ready) \n[1, 1]: (Both resources of Project 1, Task 2 are ready) \n[2, 2]: (Project 2, Task 1 is completed) \n[0, 0]: (Resources of Project 2, Task 2 are not ready) |
