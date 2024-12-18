@@ -74,7 +74,7 @@ class GraphicDisplay(tk.Tk):
         canvas.pack()
         # project task 상태, reward 확인창, workday 확인창
         self.workday_string = tk.StringVar()
-        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
+        self.workday_string.set(f'Work Day: {self.env.current_day}')
         workday_label = Label(self, textvariable=self.workday_string)
         workday_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 25)
 
@@ -88,9 +88,9 @@ class GraphicDisplay(tk.Tk):
         project_label = []
         for i in range(len(self.project_positions)):
             self.project_string.append(tk.StringVar())
-            self.project_string[i].set(f"Project {i}: \n Task 1: resource1-{self.project_status[(i*4)+0]},  \n Task2: resource1-{self.project_status[(i*4)+2]}, resource2-{self.project_status[(i*4)+3]}")
+            self.project_string[i].set(f'Project {i}: {self.project_status[(i*4)+0]}, {self.project_status[(i*4)+2]}, {self.project_status[(i*4)+3]}')
             project_label.append(Label(self, textvariable=self.project_string[i]))
-            project_label[i].place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 65+(i*60))
+            project_label[i].place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 65+(i*20))
 
 
         # 버튼 초기화
@@ -105,10 +105,10 @@ class GraphicDisplay(tk.Tk):
     def render(self):
         time.sleep(0.3)
         self.canvas.tag_raise(self.agent_icon)
-        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
+        self.workday_string.set(f'Work Day: {self.env.current_day}')
+        self.reward_string.set(f'Reward: {self.total_reward}')
         for i in range(len(self.project_string)):
-            self.project_string[i].set(f"Project {i}: \n Task 1: resource1-{self.project_status[(i*4)+0]},  \n Task2: resource1-{self.project_status[(i*4)+2]}, resource2-{self.project_status[(i*4)+3]}")
-
+            self.project_string[i].set(f'Project {i}: {self.project_status[(i*4)+0]}, {self.project_status[(i*4)+2]}, {self.project_status[(i*4)+3]}')
     def model_load(self, model_path):
         try:
             model = DQN.load(

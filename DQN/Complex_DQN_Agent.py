@@ -13,7 +13,7 @@ class ComplexConstructionEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(7)
         
         # 일일 행동 제한 수정
-        self.max_actions = 60 # 하루 액션 수
+        self.max_actions = 20 # 하루 액션 수
         self.action_count = 0
         self.current_day = 0  # 현재 날짜 추가
         self.available_resources = []  # 리소스 사용 가능 상태
