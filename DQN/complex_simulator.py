@@ -80,7 +80,7 @@ class GraphicDisplay(tk.Tk):
         canvas.pack()
         # project task 상태, reward 확인창, workday 확인창
         self.workday_string = tk.StringVar()
-        self.workday_string.set(f'Remaining Work Day: {self.env.max_total_action//self.env.action_count}={self.env.max_total_action}/{self.env.action_count}')
+        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
         workday_label = Label(self, textvariable=self.workday_string)
         workday_label.place(x=self.field_width * UNIT * 0.05, y=(self.field_height * UNIT) + 25)
 
@@ -114,9 +114,9 @@ class GraphicDisplay(tk.Tk):
         return canvas
     
     def render(self):
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.canvas.tag_raise(self.agent_icon)
-        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.action_count}={self.env.max_total_action}/{self.env.action_count}')
+        self.workday_string.set(f'Remaining Work Day: {self.env.action_count//self.env.max_actions}={self.env.action_count}/{self.env.max_actions}')
         self.reward_string.set(f'Reward: {self.total_reward}')
         for i in range(len(self.project_string)):
             idx_start = self.env.IDX_PROJECT_START[i] - self.env.IDX_PROJECT_START[0]

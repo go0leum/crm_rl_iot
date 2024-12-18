@@ -57,8 +57,8 @@ class ComplexConstructionEnv(gym.Env):
             self.IDX_POS_X  = 0
             self.IDX_POS_Y = 1
             self.IDX_RESOURCE = [(2+i) for i in range(self.resource_count)]
-            self.IDX_DAY_TYPE = self.IDX_RESOURCE[self.resource_count-1]+1
-            self.IDX_PROJECT_START = [self.IDX_DAY_TYPE+1 for i in range(project_count)]# 초기화
+            self.IDX_RESOURCE_STATE = [(2+self.resource_count+i) for i in range(self.resource_count)]
+            self.IDX_PROJECT_START = [self.IDX_RESOURCE_STATE[self.resource_count-1]+1 for i in range(project_count)]# 초기화
 
             # 프로젝트 정보 정의
             self.task_resource = [] # 프로젝트 테스크 별 리소스 종류
@@ -82,7 +82,7 @@ class ComplexConstructionEnv(gym.Env):
             # 관찰 공간 설정
             agent_location = [self.field_width, self.field_height]
             resource_status = [2 for i in range(len(self.resource_positions))]
-            date_type = [2] # 현재 날짜 타입 (짝수/홀수)
+            date_type = [2 for i in range(self.resource_count)] # 현재 날짜 타입 (짝수/홀수)
             project_status = [3 for i in range(self.task_resource_sum)]  # 프로젝트-테스크별 리소스 상태
             
             self.observation_space = gym.spaces.MultiDiscrete(
@@ -104,7 +104,7 @@ class ComplexConstructionEnv(gym.Env):
         self.state = np.array(
             [self.agent_pos[0], self.agent_pos[1]]  # 에이전트 위치
             + [0 for i in range(len(self.IDX_RESOURCE))]  # 리소스별 보유 상태
-            + [0]     # 현재 날짜 타입 (0: 짝수날, 1: 홀수날)
+            + [0 for i in range(self.resource_count)]     # 현재 가용 리소스 상태
             + [0 for i in range(self.task_resource_sum)]  # 프로젝트-태스크 리소스별 상태(0:리소스 없음, 1:리소스 있음, 2:테스크 완료)
         )
         return self.state, {}
@@ -145,7 +145,7 @@ class ComplexConstructionEnv(gym.Env):
             self.available_resources = [1]+[random.randint(0, 1) for _ in range(self.resource_count-1)]  # 매일 다른 리소스 할당
             random.shuffle(self.available_resources)
             # 날짜 타입 업데이트 (짝수날: 0, 홀수날: 1)
-            self.state[self.IDX_DAY_TYPE] = self.current_day % 2
+            self.state[self.IDX_RESOURCE_STATE] = self.available_resources
             
         # 모든 프로젝트가 완료되면 종료
         if self._all_projects_complete():

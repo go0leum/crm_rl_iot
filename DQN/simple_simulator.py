@@ -15,7 +15,6 @@ class GraphicDisplay(tk.Tk):
         self.env = env
         self.field_width = 5
         self.field_height = 5
-
         self.total_reward = 0
 
         # 상태 인덱스 상수
