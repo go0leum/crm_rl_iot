@@ -21,22 +21,40 @@ In this project, we aim to define tasks that may arise in construction site proj
 ```
 python Q-Learning/simulator.py
 ```
+1. Enter the number of episodes in the simulator.
+
+2. Click the Q-Learning button.
 
 ### DQN
 
 ```
 python DQN/train_dqn.py
 ```
+1. Select the desired environment.
+
+    - Simple environment: 3-dimensional reinforcement learning observation space
+    - Complex environment: 4-dimensional reinforcement learning observation space
+
+2. Choose whether to train a new model or continue training an existing model.
+
+3. Once training is complete, the weights for the selected environment will be saved in the weights/ folder.
+
+    - weights/simple_construction_dqn.zip
+    - weights/complex_construction_dqn.zip
 
 ## Simulator
 
 ### DQN
 - simple observation space
+    The simple_construction_dqn.zip file must be in the weights/ folder.
+    
 ```
 python DQN/complex_simulator.py
 ```
 
 - complex observation space
+    The complex_construction_dqn.zip file must be in the weights/ folder.
+    
 ```
 python DQN/complex_simulator.py
 ```
