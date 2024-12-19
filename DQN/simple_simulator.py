@@ -22,7 +22,7 @@ class GraphicDisplay(tk.Tk):
         self.IDX_POS_Y = self.env.IDX_POS_Y
 
         self.title('crm rl iot')
-        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 200))
+        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 150))
 
         self.start_pos = self.env.agent_start_pos
         self.project_positions = self.env.project_positions
@@ -109,6 +109,8 @@ class GraphicDisplay(tk.Tk):
         self.reward_string.set(f'Reward: {self.total_reward}')
         for i in range(len(self.project_string)):
             self.project_string[i].set(f'Project {i}: {self.project_status[(i*4)+0]}, {self.project_status[(i*4)+2]}, {self.project_status[(i*4)+3]}')
+        self.update()
+
     def model_load(self, model_path):
         try:
             model = DQN.load(

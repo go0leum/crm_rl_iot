@@ -23,7 +23,7 @@ class GraphicDisplay(tk.Tk):
         self.IDX_POS_Y = self.env.IDX_POS_Y
 
         self.title('crm rl iot')
-        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 100))
+        self.geometry('{0}x{1}'.format(self.field_width * UNIT, self.field_height * UNIT + 150))
 
         self.start_pos = self.env.agent_start_pos
         self.project_positions = self.env.project_positions

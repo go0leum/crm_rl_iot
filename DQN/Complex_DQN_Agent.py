@@ -289,7 +289,7 @@ if __name__ == "__main__":
         exploration_final_eps=0.1,
         target_update_interval=1000,
         verbose=1,
-        tensorboard_log="./crm_rl_iot/DQN/log/dqn_tensorboard/"
+        tensorboard_log="./crm_rl_iot/DQN/log/dqn_tensorboard/complex_simulator_dqn"
     )
     model.learn(total_timesteps=120000)
-    model.save("simple_construction_dqn") 
+    model.save("complex_construction_dqn") 
